@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Brisamar — tempo em tempo real</title>
+  <meta name="description" content="Brisamar — Observação do tempo na Marinha Grande, em tempo real." />
+  <link rel="preconnect" href="https://meteomg-tunel.franquinho.info" crossorigin>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="brand">
+      <div class="logo">🌬️</div>
+      <div>
+        <h1>Brisamar</h1>
+        <p class="subtitle">Tempo em tempo real — Marinha Grande</p>
+      </div>
+    </div>
+    <div class="status">
+      <span id="staleBadge" class="badge hidden">sem dados recentes</span>
+      <span id="ageText" class="age">—</span>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="grid">
+      <article class="card">
+        <h2>Temperatura</h2>
+        <div class="value big"><span id="temp_c">--</span><span class="unit">°C</span></div>
+        <div class="sub">aparente: <span id="apparent_c">--</span> °C</div>
+      </article>
+
+      <article class="card">
+        <h2>Humidade</h2>
+        <div class="value big"><span id="rh_pct">--</span><span class="unit">%</span></div>
+        <div class="sub">ponto de orvalho: <span id="dewpoint_c">--</span> °C</div>
+      </article>
+
+      <article class="card">
+        <h2>Vento</h2>
+        <div class="value">
+          <span id="wind_kmh" class="big">--</span><span class="unit">km/h</span>
+        </div>
+        <div class="sub">rajada: <span id="gust_kmh">--</span> km/h</div>
+        <div class="wind">
+          <div class="compass">
+            <div id="windArrow" class="arrow">▲</div>
+            <div class="rose">N</div>
+          </div>
+          <div class="dir"><span id="wind_dir_deg">--</span>°</div>
+        </div>
+      </article>
+
+      <article class="card">
+        <h2>Pressão</h2>
+        <div class="value big"><span id="pressure_hpa">--</span><span class="unit"> hPa</span></div>
+      </article>
+
+      <article class="card">
+        <h2>Chuva (dia)</h2>
+        <div class="value big"><span id="rain_day_mm">--</span><span class="unit"> mm</span></div>
+        <div class="sub">taxa: <span id="rain_rate_mmph">--</span> mm/h</div>
+      </article>
+
+      <article class="card">
+        <h2>Rad. Solar</h2>
+        <div class="value big"><span id="solar_wm2">--</span><span class="unit"> W/m²</span></div>
+        <div class="sub">UV: <span id="uv_index">--</span></div>
+      </article>
+    </section>
+
+    <section class="meta">
+      <div>Atualizado: <span id="ts_local">—</span></div>
+      <div class="muted">Fonte: estação “meteomg” (via túnel)</div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div>© <span id="year"></span> Brisamar — projeto pessoal</div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
