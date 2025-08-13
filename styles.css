@@ -24,7 +24,7 @@ body {
 
 /* layout geral */
 .shell {
-  min-height:100dvh;
+  min-height: 100dvh;
   display: grid;
   grid-template-rows: auto auto 1fr auto;
   gap: var(--gap);
@@ -67,11 +67,16 @@ body {
   border-radius: 50%;
   display: grid;
   place-items: center;
-  font-size: clamp(42px, 6vw, 68px);
   color: #fff;
   background: radial-gradient(120% 120% at 30% 30%, #fbbf24, #f59e0b);
   box-shadow: 0 0 0 6px #fff inset, 0 0 0 2px #e5e7eb inset, 0 4px 16px #0001;
 }
+
+.now-icon svg{
+  width: 68%;
+  height: 68%;
+}
+
 .now-temp {
   line-height: 1;
 }
@@ -148,6 +153,11 @@ body {
 .days .d {
   font-weight: 700;
 }
+.days .ic{
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
 .days .t {
   color: var(--muted);
   font-size: 0.95rem;
@@ -163,9 +173,13 @@ body {
 .chart-title {
   font-weight: 800;
 }
-.chart-canvas{
-  min-height:0;
-  height:clamp(220px, 28vh, 360px);  /* ajusta-se ao ecrã, sem rebentar o layout */
+.chart-canvas {
+  min-height: 0;
+  height: clamp(
+    220px,
+    28vh,
+    360px
+  ); /* ajusta-se ao ecrã, sem rebentar o layout */
 }
 .chart-canvas canvas {
   width: 100%;
@@ -205,22 +219,28 @@ body {
 }
 
 /* ícones Brisa Marinha */
-.bm-ico{
-  width: 72px; height: 72px; 
+.bm-ico {
+  width: 72px;
+  height: 72px;
   color: var(--icon, #5b87c8); /* azul suave */
 }
-.bm-ico.sunny   { color: #f0a94a; }      /* laranja suave p/ sol */
-.bm-ico.alert   { color: #d36d6d; }      /* p/ trovoada/avisos */
-.bm-ico.neutral { color: #7a8ca8; }      /* nublado/nevoeiro */
+.bm-ico.sunny {
+  color: #f0a94a;
+} /* laranja suave p/ sol */
+.bm-ico.alert {
+  color: #d36d6d;
+} /* p/ trovoada/avisos */
+.bm-ico.neutral {
+  color: #7a8ca8;
+} /* nublado/nevoeiro */
 
 /* Ícone grande (topo) */
-#bm-now-ico{
-  width: clamp(72px, 9vw, 120px);
-  height: clamp(72px, 9vw, 120px);
+#bm-now-ico {
+
 }
 
 /* Ícones dos cartões de previsão */
-.bm-ico--sm{
+.bm-ico--sm {
   width: 24px;
   height: 24px;
 }
@@ -243,6 +263,13 @@ body {
     margin-top: 0;
   }
 }
+
+@media (max-height: 780px){
+  .hero-top{ min-height: 36vh; }         /* de 40vh -> 36vh */
+  .chart-canvas{ height: clamp(200px, 24vh, 320px); }  /* 28vh -> 24vh */
+  .shell{ padding-block: clamp(8px, 1.5vh, 18px); }    /* aperta o padding vertical */
+}
+
 
 @media (max-width: 520px) {
   .days {
