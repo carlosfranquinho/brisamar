@@ -23,6 +23,62 @@ const localTime = (iso) => new Date(iso);
   $("#nowDate").textContent = fmtDate.charAt(0).toUpperCase()+fmtDate.slice(1);
 })();
 
+// Decide se é dia ou noite (passa horas em epoch ms ou 'HH:MM')
+function isDay(nowTs, sunriseStr, sunsetStr){
+  const [srH,srM] = sunriseStr.split(':').map(Number);
+  const [ssH,ssM] = sunsetStr.split(':').map(Number);
+  const d = new Date(nowTs);
+  const sr = new Date(d); sr.setHours(srH, srM, 0, 0);
+  const ss = new Date(d); ss.setHours(ssH, ssM, 0, 0);
+  return d >= sr && d < ss;
+}
+
+// Mapa IPMA -> id de símbolo
+// Fonte dos grupos: documentação/código de integrações IPMA públicas. :contentReference[oaicite:1]{index=1}
+const IPMA_ICON = (code, isDaytime) => {
+  // normaliza para número
+  const c = Number(code);
+
+  // céu limpo / pouco nublado / poucas nuvens / nublado alto
+  if (c === 1) return isDaytime ? 'clear-day' : 'clear-night';
+  if (c === 2 || c === 25) return isDaytime ? 'partly-cloudy-day' : 'partly-cloudy-night';
+  if (c === 3) return isDaytime ? 'partly-cloudy-day' : 'partly-cloudy-night';
+  if (c === 4 || c === 24 || c === 27) return 'cloudy';
+  if (c === 5) return 'overcast';
+
+  // chuva / aguaceiros
+  if ([6,7,8,15].includes(c)) return 'rain';          // aguaceiros
+  if ([9,10,12,13].includes(c)) return 'drizzle';     // chuva fraca/moderada
+  if ([11,14].includes(c)) return 'heavy-rain';       // chuva forte
+
+  // nevoeiro
+  if ([16,17,26].includes(c)) return 'fog';
+
+  // neve e mistos
+  if (c === 18) return 'snow';
+  if (c === 21) return 'sleet';           // chuva e gelo
+  if (c === 22) return 'freezing-rain';   // chuva gelada
+  if (c === 23 || c === 19 || c === 20) return 'thunder';
+
+  // fallback
+  return 'unknown';
+};
+
+// Exemplo de aplicação no teu render:
+function renderIcon(idTipoTempo, sunrise, sunset){
+  const day = isDay(Date.now(), sunrise, sunset);
+  const name = IPMA_ICON(idTipoTempo, day);
+  const el = document.querySelector('.bm-icone svg use');
+  if (el) el.setAttribute('href', `#bm-icon-${name}`);
+  // opcional: mudar cor por classe
+  const svg = document.querySelector('.bm-icone svg');
+  if (!svg) return;
+  svg.classList.remove('sunny','alert','neutral');
+  if (['clear-day','clear-night','partly-cloudy-day','partly-cloudy-night'].includes(name)) svg.classList.add('sunny');
+  else if (['thunder','heavy-rain'].includes(name)) svg.classList.add('alert');
+  else svg.classList.add('neutral');
+}
+
 /* Sun times (coordenadas aproximadas – ajusta para tua estação) */
 const LAT = 39.75, LON = -8.94; 
 function setSunTimes(date=new Date()){

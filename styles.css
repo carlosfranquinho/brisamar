@@ -204,6 +204,16 @@ body {
   font-weight: 700;
 }
 
+/* ícones Brisa Marinha */
+.bm-ico{
+  width: 72px; height: 72px; 
+  color: var(--icon, #5b87c8); /* azul suave */
+}
+.bm-ico.sunny   { color: #f0a94a; }      /* laranja suave p/ sol */
+.bm-ico.alert   { color: #d36d6d; }      /* p/ trovoada/avisos */
+.bm-ico.neutral { color: #7a8ca8; }      /* nublado/nevoeiro */
+
+
 /* responsivo */
 @media (max-width: 980px) {
   .hero-top {

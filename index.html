@@ -5,8 +5,14 @@
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Brisa Marinha</title>
     <link rel="stylesheet" href="styles.css" />
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/suncalc@1.9.0/suncalc.min.js" defer></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"
+      defer
+    ></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/suncalc@1.9.0/suncalc.min.js"
+      defer
+    ></script>
     <script src="app.js" defer></script>
   </head>
   <body>
@@ -28,33 +34,52 @@
         </div>
 
         <div class="now-metrics">
-          <div class="m"><span>Nascer</span><strong id="sunrise">--:--</strong></div>
-          <div class="m"><span>Pôr-do-sol</span><strong id="sunset">--:--</strong></div>
+          <div class="m">
+            <span>Nascer</span><strong id="sunrise">--:--</strong>
+          </div>
+          <div class="m">
+            <span>Pôr-do-sol</span><strong id="sunset">--:--</strong>
+          </div>
 
-          <div class="m"><span>Vento</span>
+          <div class="m">
+            <span>Vento</span>
             <strong><span id="wind">--</span> km/h</strong>
           </div>
-          <div class="m"><span>Rajada / Dir</span>
-            <strong><span id="gust">--</span> · <span id="winddir">—</span></strong>
+          <div class="m">
+            <span>Rajada / Dir</span>
+            <strong
+              ><span id="gust">--</span> · <span id="winddir">—</span></strong
+            >
           </div>
 
           <div class="m"><span>Humidade</span><strong id="rh">--</strong></div>
-          <div class="m"><span>P. Orvalho</span><strong id="dew">--</strong></div>
+          <div class="m">
+            <span>P. Orvalho</span><strong id="dew">--</strong>
+          </div>
 
-          <div class="m"><span>Pressão</span><strong><span id="press">--</span> hPa</strong></div>
+          <div class="m">
+            <span>Pressão</span><strong><span id="press">--</span> hPa</strong>
+          </div>
           <div class="m"><span>UV</span><strong id="uv">--</strong></div>
 
-          <div class="m"><span>Chuva (24h)</span><strong><span id="rain24">--</span> mm</strong></div>
-          <div class="m"><span>Atualização</span><strong id="age">—</strong></div>
+          <div class="m">
+            <span>Chuva (24h)</span
+            ><strong><span id="rain24">--</span> mm</strong>
+          </div>
+          <div class="m">
+            <span>Atualização</span><strong id="age">—</strong>
+          </div>
         </div>
       </section>
 
       <!-- parte inferior: previsão 3 dias + gráfico -->
       <section class="bottom">
-  <aside class="forecast">
-    <h2 class="forecast-title">Previsão</h2>
-    <ul id="forecast" class="days"><!-- 3 itens via JS --></ul>
-  </aside>
+        <aside class="forecast">
+          <h2 class="forecast-title">Previsão</h2>
+          <ul id="forecast" class="days">
+            <!-- 3 itens via JS -->
+          </ul>
+        </aside>
 
         <section class="chart">
           <header class="chart-title">Últimas 24 horas</header>
@@ -72,5 +97,166 @@
         <span id="staleFlag" class="ok">Ligação excelente</span>
       </footer>
     </main>
+    <!-- SPRITE Brisa Marinha -->
+    <svg xmlns="http://www.w3.org/2000/svg" style="display: none">
+      <defs>
+        <!-- shapes atómicas -->
+        <g
+          id="shape-sun"
+          stroke="currentColor"
+          fill="none"
+          stroke-width="2"
+          stroke-linecap="round"
+        >
+          <circle cx="12" cy="12" r="5" />
+          <path
+            d="M12 1v3M12 20v3M1 12h3M20 12h3M3.5 3.5l2.1 2.1M18.4 18.4l2.1 2.1M3.5 20.5l2.1-2.1M18.4 5.6l2.1-2.1"
+          />
+        </g>
+        <g id="shape-moon" stroke="currentColor" fill="none" stroke-width="2">
+          <path d="M18 14.5A7.5 7.5 0 1 1 9.5 2a8.5 8.5 0 1 0 8.5 12.5z" />
+        </g>
+        <g
+          id="shape-cloud"
+          stroke="currentColor"
+          fill="none"
+          stroke-width="2"
+          stroke-linecap="round"
+        >
+          <path d="M6 18h11a4 4 0 0 0 0-8 6 6 0 0 0-11-1 4 4 0 0 0 0 9z" />
+        </g>
+        <g
+          id="shape-raindrops"
+          stroke="currentColor"
+          fill="none"
+          stroke-width="2"
+          stroke-linecap="round"
+        >
+          <path
+            d="M9 20c0 .8-.7 1.5-1.5 1.5S6 20.8 6 20s1.5-3 1.5-3 1.5 2.2 1.5 3z"
+          />
+          <path
+            d="M15 20c0 .8-.7 1.5-1.5 1.5S12 20.8 12 20s1.5-3 1.5-3 1.5 2.2 1.5 3z"
+          />
+        </g>
+        <g
+          id="shape-drizzle"
+          stroke="currentColor"
+          fill="none"
+          stroke-width="2"
+        >
+          <path d="M6 20l2-2M11 21l2-2M16 20l2-2" />
+        </g>
+        <g
+          id="shape-snow"
+          stroke="currentColor"
+          fill="none"
+          stroke-width="2"
+          stroke-linecap="round"
+        >
+          <path
+            d="M8 20l2-2m0 0l2 2m-2-2v-3M14 20l2-2m0 0l2 2m-2-2v-3M10 14h4"
+          />
+        </g>
+        <g id="shape-bolt" stroke="currentColor" fill="none" stroke-width="2">
+          <path d="M13 10l-3 5h3l-2 5 6-8h-3l2-4z" />
+        </g>
+        <g
+          id="shape-fog"
+          stroke="currentColor"
+          fill="none"
+          stroke-width="2"
+          stroke-linecap="round"
+        >
+          <path d="M4 18h12M2 21h14M3 15h16" />
+        </g>
+        <g
+          id="shape-hail"
+          stroke="currentColor"
+          fill="none"
+          stroke-width="2"
+          stroke-linecap="round"
+        >
+          <circle cx="7" cy="20" r="1" />
+          <circle cx="11" cy="21" r="1" />
+          <circle cx="15" cy="20" r="1" />
+        </g>
+        <g
+          id="shape-wind"
+          stroke="currentColor"
+          fill="none"
+          stroke-width="2"
+          stroke-linecap="round"
+        >
+          <path d="M2 18h10a3 3 0 1 0-3-3M2 14h8a2.5 2.5 0 1 0-2.5-2.5" />
+        </g>
+
+        <!-- ícones compostos -->
+        <g id="bm-icon-clear-day"><use href="#shape-sun" /></g>
+        <g id="bm-icon-clear-night"><use href="#shape-moon" /></g>
+
+        <g id="bm-icon-partly-cloudy-day">
+          <use href="#shape-sun" />
+          <use href="#shape-cloud" transform="translate(6,6)" />
+        </g>
+        <g id="bm-icon-partly-cloudy-night">
+          <use href="#shape-moon" />
+          <use href="#shape-cloud" transform="translate(6,6)" />
+        </g>
+
+        <g id="bm-icon-cloudy"><use href="#shape-cloud" /></g>
+        <g id="bm-icon-overcast">
+          <use href="#shape-cloud" />
+          <use href="#shape-cloud" transform="translate(2,2) scale(1.15)" />
+        </g>
+
+        <g id="bm-icon-drizzle">
+          <use href="#shape-cloud" />
+          <use href="#shape-drizzle" />
+        </g>
+        <g id="bm-icon-rain">
+          <use href="#shape-cloud" />
+          <use href="#shape-raindrops" />
+        </g>
+        <g id="bm-icon-heavy-rain">
+          <use href="#shape-cloud" />
+          <use href="#shape-raindrops" />
+          <use href="#shape-raindrops" transform="translate(0,2)" />
+        </g>
+
+        <g id="bm-icon-thunder">
+          <use href="#shape-cloud" />
+          <use href="#shape-bolt" />
+        </g>
+
+        <g id="bm-icon-sleet">
+          <use href="#shape-cloud" />
+          <use href="#shape-raindrops" />
+          <use href="#shape-snow" transform="translate(0,2) scale(.9)" />
+        </g>
+        <g id="bm-icon-freezing-rain">
+          <use href="#shape-cloud" />
+          <use href="#shape-raindrops" />
+          <use href="#shape-hail" transform="translate(0,1)" />
+        </g>
+
+        <g id="bm-icon-snow">
+          <use href="#shape-cloud" />
+          <use href="#shape-snow" />
+        </g>
+        <g id="bm-icon-hail">
+          <use href="#shape-cloud" />
+          <use href="#shape-hail" />
+        </g>
+
+        <g id="bm-icon-fog">
+          <use href="#shape-cloud" />
+          <use href="#shape-fog" />
+        </g>
+        <g id="bm-icon-wind"><use href="#shape-wind" /></g>
+
+        <g id="bm-icon-unknown"><use href="#shape-cloud" /></g>
+      </defs>
+    </svg>
   </body>
 </html>
