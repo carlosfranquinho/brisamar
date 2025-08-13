@@ -3,7 +3,7 @@ const LIVE_URL = "https://meteomg-tunel.franquinho.info/live";
 const HIST_URL = "https://meteomg-tunel.franquinho.info/history?hours=24";
 
 /* IPMA – mete aqui o teu local (globalIdLocal)  */
-const IPMA_GLOBAL_ID = 1110600; // TODO: troca para o teu
+const IPMA_GLOBAL_ID = 1110900; 
 const IPMA_FORECAST = `https://api.ipma.pt/open-data/forecast/meteorology/cities/daily/${IPMA_GLOBAL_ID}.json`;
 
 /* Helpers */
@@ -84,22 +84,6 @@ async function loadLive(){
 /* Histórico 24h -> gráfico */
 let chart;
 async function loadHistory(){
-  const r = await fetch(HIST_URL, {cache:"no-store"});
-  if(!r.ok) throw new Error("hist "+r.status);
-  const rows = await r.json();
-  // Esperado: [{ts_utc, temp_c, rain_day_mm, rain_rate_mmph}, ...] crescente no tempo
-  const labels = rows.map(x => new Date(x.ts_utc));
-  const temps  = rows.map(x => x.temp_c);
-  // mm/h usados como barras
-  const rainRate = rows.map(x => x.rain_rate_mmph ?? 0);
-
-  // soma chuva das últimas 24h (pelo rate ou delta do rain_day_mm se preferires)
-  const rain24 = rainRate.reduce((a,b)=> a + (b||0)/6, 0); // aproximação 10-min -> 1/6h
-  $("#rain24").textContent = fmt(rain24,1);
-
-/* Histórico 24h -> gráfico */
-let chart;
-async function loadHistory(){
   const r = await fetch(HIST_URL, { cache: "no-store" });
   if(!r.ok) throw new Error("hist " + r.status);
   const rows = await r.json();
@@ -171,7 +155,6 @@ async function loadHistory(){
     }
   });
 }
-
 
 /* Boot */
 async function boot(){
