@@ -26,7 +26,18 @@
       <!-- zona superior: ícone + temperatura + métricas -->
       <section class="hero-top">
         <div class="now-left">
-          <div class="now-icon" aria-hidden="true">⛅</div>
+          <div class="now-icon" aria-hidden="true">
+            <svg
+              class="bm-ico"
+              id="bm-now-ico"
+              viewBox="0 0 24 24"
+              role="img"
+              aria-label="Estado atual"
+            >
+              <use href="#bm-icon-partly-cloudy-day"></use>
+            </svg>
+          </div>
+
           <div class="now-temp">
             <span id="temp">--</span><span class="deg">°C</span>
             <div class="feels">sensação <span id="apparent">--</span>°</div>

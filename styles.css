@@ -62,8 +62,8 @@ body {
   gap: clamp(12px, 2vw, 24px);
 }
 .now-icon {
-  width: clamp(90px, 12vw, 140px);
-  height: clamp(90px, 12vw, 140px);
+  width: clamp(72px, 9vw, 120px);
+  height: clamp(72px, 9vw, 120px);
   border-radius: 50%;
   display: grid;
   place-items: center;
@@ -213,6 +213,17 @@ body {
 .bm-ico.alert   { color: #d36d6d; }      /* p/ trovoada/avisos */
 .bm-ico.neutral { color: #7a8ca8; }      /* nublado/nevoeiro */
 
+/* Ícone grande (topo) */
+#bm-now-ico{
+  width: clamp(72px, 9vw, 120px);
+  height: clamp(72px, 9vw, 120px);
+}
+
+/* Ícones dos cartões de previsão */
+.bm-ico--sm{
+  width: 24px;
+  height: 24px;
+}
 
 /* responsivo */
 @media (max-width: 980px) {
