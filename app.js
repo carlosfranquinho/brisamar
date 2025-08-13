@@ -117,17 +117,17 @@ function setSunTimes(date = new Date()) {
 }
 
 /* Previsão IPMA (3 dias) */
-async function loadForecast(){
-  try{
-    const r = await fetch(IPMA_FORECAST, {cache:"no-store"});
+async function loadForecast() {
+  try {
+    const r = await fetch(IPMA_FORECAST, { cache: "no-store" });
     const j = await r.json();
-    const days = j.data?.slice(0,3) || [];
+    const days = j.data?.slice(0, 3) || [];
     const ul = $("#forecast");
     ul.innerHTML = "";
 
-    days.forEach((d, i)=>{
+    days.forEach((d, i) => {
       const day = new Date(d.forecastDate);
-      const label = day.toLocaleDateString('pt-PT',{weekday:'short'});
+      const label = day.toLocaleDateString("pt-PT", { weekday: "short" });
 
       // ícone (usa sempre versão “day” para cartões)
       const iconName = iconNameFromIpma(d.idWeatherType, /*isDaytime*/ true);
@@ -147,15 +147,14 @@ async function loadForecast(){
       // No 1.º item, aproveita e atualiza o ícone grande do topo
       if (i === 0) {
         const sunrise = $("#sunrise")?.textContent || "06:00";
-        const sunset  = $("#sunset")?.textContent  || "21:00";
+        const sunset = $("#sunset")?.textContent || "21:00";
         renderNowIcon(d.idWeatherType, sunrise, sunset);
       }
     });
-  }catch(e){
+  } catch (e) {
     console.warn("IPMA falhou:", e);
   }
 }
-
 
 /* Live */
 async function loadLive() {
@@ -260,15 +259,20 @@ async function loadHistory() {
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      resizeDelay: 200,
-      normalized: true,
+      layout: { padding: { top: 4, right: 8, bottom: 0, left: 4 } }, // menos espaço
       animation: false,
-      plugins: { legend: { display: false }, tooltip: { enabled: true } },
+      plugins: {
+        legend: { display: false },
+        tooltip: { enabled: true },
+      },
       scales: {
-        x: { grid: { color: "#0002" } },
+        x: {
+          grid: { color: "#00000014" }, // grelha mais suave
+          ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 12 },
+        },
         y1: {
           position: "left",
-          grid: { color: "#0002" },
+          grid: { color: "#00000014" },
           min: 0,
           max: 43,
           ticks: { stepSize: 5 },

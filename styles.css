@@ -24,7 +24,9 @@ body {
 
 /* layout geral */
 .shell {
+  max-width: 1200px; 
   min-height: 100dvh;
+  margin-inline: auto;
   display: grid;
   grid-template-rows: auto auto 1fr auto;
   gap: var(--gap);
@@ -81,10 +83,11 @@ body {
   line-height: 1;
 }
 .now-temp .deg {
-  font-size: 0.55em;
+  font-size: .6em;
   margin-left: 6px;
   color: var(--accent);
-  vertical-align: text-top; /* sobe ligeiramente o símbolo */
+  vertical-align: text-top;
+  transform: translateY(-.12em);
 }
 .now-temp #temp {
   font-size: clamp(54px, 10vw, 120px);
@@ -100,7 +103,7 @@ body {
 .now-metrics {
   display: grid;
   gap: 10px 18px;
-  grid-template-columns: repeat(2, minmax(220px, 1fr));
+  grid-template-columns: repeat(2, minmax(280px, 1fr));
 }
 .now-metrics .m {
   display: flex;
@@ -108,12 +111,18 @@ body {
   gap: 16px;
   padding: 6px 0;
   border-bottom: 1px dashed #0002;
+  align-items: baseline;
 }
 .now-metrics .m:last-child {
   border-bottom: 0;
 }
+.now-metrics .m strong{
+  text-align: right;
+  flex: 1;
+}
 .now-metrics span {
   color: var(--muted);
+  min-width: 120px; 
 }
 .now-metrics strong {
   font-variant-numeric: tabular-nums;
@@ -151,12 +160,14 @@ body {
   box-shadow: 0 1px 4px #0000000f;
 }
 .days .d {
-  font-weight: 700;
+  font-weight: 800;
+  margin-bottom: 4px;
 }
 .days .ic{
   display: flex;
   align-items: center;
   gap: 6px;
+  margin: 2px 0 6px;
 }
 .days .t {
   color: var(--muted);
@@ -265,9 +276,9 @@ body {
 }
 
 @media (max-height: 780px){
-  .hero-top{ min-height: 36vh; }         /* de 40vh -> 36vh */
-  .chart-canvas{ height: clamp(200px, 24vh, 320px); }  /* 28vh -> 24vh */
-  .shell{ padding-block: clamp(8px, 1.5vh, 18px); }    /* aperta o padding vertical */
+  .hero-top{ min-height: 36vh; }
+  .chart-canvas{ height: clamp(200px, 24vh, 320px); }
+  .shell{ padding-block: clamp(8px, 1.5vh, 18px); }
 }
 
 
