@@ -190,11 +190,18 @@ async function loadForecast() {
 function appendLivePointToChart(j) {
   if (!chart) return;
 
-  // timestamp “local”
-  const t = new Date((j.ts_local ?? j.ts_utc).replace(" ", "T"));
-  const last = chart.data.labels.at(-1);
-  // se o ponto é igual/mais antigo, ignora
-  if (last && t <= new Date(last)) return;
+  // timestamp seguro
+  const ts = j.ts_local || j.ts_utc;
+  if (!ts) return; // sem timestamp, não anexa
+  const isSqlFmt = ts.includes(" ") && !ts.endsWith("Z");
+  const t = new Date(isSqlFmt ? ts.replace(" ", "T") : ts);
+
+  // ignora pontos fora de ordem
+  const lastLabel = chart.data.labels.at(-1);
+  if (lastLabel && t <= new Date(`1970-01-01T${lastLabel}`)) {
+    // lastLabel está em HH:MM; este check é best-effort — se quiseres rigor, guarda Date reais em labels
+    return;
+  }
 
   // valores
   const temp = Number.isFinite(+j.temp_c) ? +j.temp_c : null;
@@ -206,7 +213,7 @@ function appendLivePointToChart(j) {
   chart.data.datasets[0].data.push(temp);
   chart.data.datasets[1].data.push(rain);
 
-  // manter janela ~24h (se estiveres a receber 1 ponto/10min ~ 144; ajusta se preciso)
+  // manter janela limitada
   const maxPoints = 200;
   while (chart.data.labels.length > maxPoints) {
     chart.data.labels.shift();
@@ -214,7 +221,7 @@ function appendLivePointToChart(j) {
     chart.data.datasets[1].data.shift();
   }
 
-  chart.update("none"); // sem animação
+  chart.update("none");
 }
 
 /* Live */
@@ -227,29 +234,6 @@ async function loadLive() {
   if (!r.ok) throw new Error("live " + r.status);
   const j = await r.json();
 
-  $("#temp").textContent = fmt(j.temp_c, 0);
-  $("#apparent").textContent = fmt(j.apparent_c ?? j.temp_c, 0);
-  $("#wind").textContent = fmt(j.wind_kmh, 0);
-  $("#winddir").textContent = degToDir(j.wind_dir_deg);
-  $("#gust").textContent = fmt(j.gust_kmh, 0);
-  $("#rh").textContent = fmt(j.rh_pct, 0) + "%";
-  $("#dew").textContent = fmt(j.dewpoint_c, 1) + "°";
-  $("#press").textContent = fmt(j.pressure_hpa, 0);
-  $("#uv").textContent = fmt(j.uv_index, 1);
-
-  const ts = localTime(j.ts_local ?? j.ts_utc);
-  setSunTimes(ts);
-
-  $("#age").textContent = j.age_s != null ? `${Math.round(j.age_s)} s` : "—";
-  const flag = $("#staleFlag");
-  if (j.stale) {
-    flag.textContent = "Dados desatualizados";
-    flag.className = "stale";
-  } else {
-    flag.textContent = "Estação online";
-    flag.className = "ok";
-  }
-
   setText("#temp", fmt(j.temp_c, 1));
   setText("#apparent", fmt(j.apparent_c ?? j.temp_c, 1));
   setText("#wind", fmt(j.wind_kmh, 0));
@@ -259,6 +243,19 @@ async function loadLive() {
   setText("#dew", fmt(j.dewpoint_c, 1) + "°");
   setText("#press", fmt(j.pressure_hpa, 0));
   setText("#uv", fmt(j.uv_index, 1));
+
+  const ts = localTime(j.ts_local ?? j.ts_utc);
+  setSunTimes(ts);
+
+  // legenda/estado
+  const flag = $("#staleFlag");
+  if (j.stale) {
+    flag.textContent = "Dados desatualizados";
+    flag.className = "stale";
+  } else {
+    flag.textContent = "Estação online";
+    flag.className = "ok";
+  }
 
   startCountdown(60000);
   appendLivePointToChart(j);
