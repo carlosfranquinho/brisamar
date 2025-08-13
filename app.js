@@ -187,6 +187,36 @@ async function loadForecast() {
   }
 }
 
+function appendLivePointToChart(j) {
+  if (!chart) return;
+
+  // timestamp “local”
+  const t = new Date((j.ts_local ?? j.ts_utc).replace(" ", "T"));
+  const last = chart.data.labels.at(-1);
+  // se o ponto é igual/mais antigo, ignora
+  if (last && t <= new Date(last)) return;
+
+  // valores
+  const temp = Number.isFinite(+j.temp_c) ? +j.temp_c : null;
+  const rain = Number.isFinite(+j.rain_rate_mmph) ? +j.rain_rate_mmph : 0;
+
+  chart.data.labels.push(
+    t.toLocaleTimeString("pt-PT", { hour: "2-digit", minute: "2-digit" })
+  );
+  chart.data.datasets[0].data.push(temp);
+  chart.data.datasets[1].data.push(rain);
+
+  // manter janela ~24h (se estiveres a receber 1 ponto/10min ~ 144; ajusta se preciso)
+  const maxPoints = 200;
+  while (chart.data.labels.length > maxPoints) {
+    chart.data.labels.shift();
+    chart.data.datasets[0].data.shift();
+    chart.data.datasets[1].data.shift();
+  }
+
+  chart.update("none"); // sem animação
+}
+
 /* Live */
 async function loadLive() {
   const r = await fetch(LIVE_URL, {
@@ -231,6 +261,7 @@ async function loadLive() {
   setText("#uv", fmt(j.uv_index, 1));
 
   startCountdown(60000);
+  appendLivePointToChart(j);
 }
 
 /* Histórico 24h -> gráfico */
@@ -342,3 +373,5 @@ async function boot() {
     console.error(err);
   }
 }
+
+boot().catch(console.error);
