@@ -140,7 +140,9 @@ async function loadHistory(){
     options:{
       responsive:true,
       maintainAspectRatio:false,  // parent precisa de altura definida (ver CSS abaixo)
-      normalized:true,            // ignora outliers/NaN em cálculos internos
+      // Normalizar os dados causava problemas quando todos os valores eram 0 ou nulos,
+      // levando o gráfico a crescer indefinidamente. Mantemos os valores originais.
+      normalized:false,
       animation:false,
       plugins:{ legend:{display:false}, tooltip:{enabled:true} },
       scales:{
