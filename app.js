@@ -110,6 +110,11 @@ function renderNowIcon(ipmaCode, sunriseHHMM, sunsetHHMM) {
 const LAT = 39.75,
   LON = -8.94;
 function setSunTimes(date = new Date()) {
+  if (typeof SunCalc === "undefined") {
+    $("#sunrise").textContent = "—";
+    $("#sunset").textContent = "—";
+    return;
+  }
   const t = SunCalc.getTimes(date, LAT, LON);
   const opt = { hour: "2-digit", minute: "2-digit" };
   $("#sunrise").textContent = t.sunrise.toLocaleTimeString("pt-PT", opt);
@@ -290,8 +295,12 @@ async function loadHistory() {
 
 /* Boot */
 async function boot() {
-  await Promise.all([loadLive(), loadForecast(), loadHistory()]);
-  // refrescar live a cada 60s (gráfico pode ficar estático)
-  setInterval(loadLive, 60000);
+  try {
+    await loadLive(); // garante #sunrise / #sunset
+    await loadForecast(); // agora já há horas reais para o ícone
+    await loadHistory(); // gráfico pode vir por fim
+    setInterval(loadLive, 60000);
+  } catch (err) {
+    console.error(err);
+  }
 }
-boot().catch(console.error);

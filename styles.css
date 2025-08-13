@@ -24,7 +24,7 @@ body {
 
 /* layout geral */
 .shell {
-  max-width: 1200px; 
+  max-width: 1200px;
   min-height: 100dvh;
   margin-inline: auto;
   display: grid;
@@ -74,7 +74,7 @@ body {
   box-shadow: 0 0 0 6px #fff inset, 0 0 0 2px #e5e7eb inset, 0 4px 16px #0001;
 }
 
-.now-icon svg{
+.now-icon svg {
   width: 68%;
   height: 68%;
 }
@@ -83,11 +83,11 @@ body {
   line-height: 1;
 }
 .now-temp .deg {
-  font-size: .6em;
+  font-size: 0.6em;
   margin-left: 6px;
   color: var(--accent);
   vertical-align: text-top;
-  transform: translateY(-.12em);
+  transform: translateY(-0.12em);
 }
 .now-temp #temp {
   font-size: clamp(54px, 10vw, 120px);
@@ -116,13 +116,13 @@ body {
 .now-metrics .m:last-child {
   border-bottom: 0;
 }
-.now-metrics .m strong{
+.now-metrics .m strong {
   text-align: right;
   flex: 1;
 }
 .now-metrics span {
   color: var(--muted);
-  min-width: 120px; 
+  min-width: 120px;
 }
 .now-metrics strong {
   font-variant-numeric: tabular-nums;
@@ -163,7 +163,7 @@ body {
   font-weight: 800;
   margin-bottom: 4px;
 }
-.days .ic{
+.days .ic {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -207,7 +207,7 @@ body {
   display: inline-block;
   width: 10px;
   height: 10px;
-  border:1px solid #0002;
+  border: 1px solid #0002;
   border-radius: 50%;
 }
 .dot.t {
@@ -248,7 +248,6 @@ body {
 
 /* Ícone grande (topo) */
 #bm-now-ico {
-
 }
 
 /* Ícones dos cartões de previsão */
@@ -276,12 +275,17 @@ body {
   }
 }
 
-@media (max-height: 780px){
-  .hero-top{ min-height: 36vh; }
-  .chart-canvas{ height: clamp(200px, 24vh, 320px); }
-  .shell{ padding-block: clamp(8px, 1.5vh, 18px); }
+@media (max-height: 780px) {
+  .hero-top {
+    min-height: 36vh;
+  }
+  .chart-canvas {
+    height: clamp(200px, 24vh, 320px);
+  }
+  .shell {
+    padding-block: clamp(8px, 1.5vh, 18px);
+  }
 }
-
 
 @media (max-width: 520px) {
   .days {
@@ -290,9 +294,42 @@ body {
 }
 
 /* foco visível mas discreto para links/controles, caso existam */
-:focus-visible{ outline: 3px solid #3b82f666; outline-offset: 3px; }
+:focus-visible {
+  outline: 3px solid #3b82f666;
+  outline-offset: 3px;
+}
 
 /* respeitar preferência de utilizadores que evitam animações */
-@media (prefers-reduced-motion: reduce){
-  *{ animation: none !important; transition: none !important; }
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
 }
+
+/* 1) Grau (ºC): alinhamento seguro em todos os browsers */
+.now-temp .deg{
+  display: inline-block;     /* garante que o transform aplica igual em Safari/Firefox */
+  line-height: 1;            /* evita saltos verticais */
+}
+
+/* 2) Cartões da previsão: evitar que as temperaturas quebrem linha */
+.days .t{
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;  /* números com largura igual */
+}
+
+/* 3) Garantir que os 3 cartões ficam com a MESMA altura mesmo com textos diferentes */
+.days{ align-items: stretch; }
+.days li{ display: grid; grid-auto-rows: min-content; }
+
+/* 4) Grelha de métricas: títulos não “saltam” em ecrãs muito largos */
+@media (min-width: 1280px){
+  .now-metrics{ grid-template-columns: repeat(3, minmax(260px, 1fr)); }
+}
+
+/* 5) Canvas do gráfico: evita reflows desnecessários e dá robustez ao resize */
+.chart-canvas{ contain: content; }
+
+/* 6) Ícone grande: se for meramente decorativo, podes usar isto */
+.now-icon[aria-hidden="true"] svg{ pointer-events: none; }
