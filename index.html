@@ -3,69 +3,71 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Brisamar · Estação</title>
-    <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+    <title>Brisa Marinha</title>
     <link rel="stylesheet" href="styles.css" />
-    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
-    <!-- SunCalc (nascer/pôr-do-sol) -->
     <script src="https://cdn.jsdelivr.net/npm/suncalc@1.9.0/suncalc.min.js" defer></script>
     <script src="app.js" defer></script>
   </head>
   <body>
-    <main class="wrap">
-      <!-- Barra de título -->
-      <header class="titlebar">
-        <h1 id="place">Brisamar</h1>
-        <div id="nowDate">—</div>
+    <main class="shell">
+      <!-- título + data -->
+      <header class="hero-head">
+        <h1>Brisa Marinha</h1>
+        <p id="nowDate">—</p>
       </header>
 
-      <!-- HERO: temp grande + métricas -->
-      <section class="hero eink">
-        <div class="hero-main">
-          <div class="sunball" aria-hidden="true"></div>
-          <div>
-            <div class="temp">
-              <span id="temp">--</span><span class="deg">°C</span>
-            </div>
+      <!-- zona superior: ícone + temperatura + métricas -->
+      <section class="hero-top">
+        <div class="now-left">
+          <div class="now-icon" aria-hidden="true">⛅</div>
+          <div class="now-temp">
+            <span id="temp">--</span><span class="deg">°C</span>
             <div class="feels">sensação <span id="apparent">--</span>°</div>
-            <div class="windline">
-              vento <span id="wind">--</span> km/h · rajada <span id="gust">--</span> · dir <span id="winddir">—</span>
-            </div>
           </div>
         </div>
 
-        <div class="stats">
-          <div class="row"><span class="k">Nascer</span><span id="sunrise">--:--</span></div>
-          <div class="row"><span class="k">Pôr-do-sol</span><span id="sunset">--:--</span></div>
-          <div class="row"><span class="k">Humidade</span><span id="rh">--</span></div>
-          <div class="row"><span class="k">Ponto orvalho</span><span id="dew">--</span></div>
-          <div class="row"><span class="k">Pressão</span><span><span id="press">--</span> hPa</span></div>
-          <div class="row"><span class="k">UV</span><span id="uv">--</span></div>
-          <div class="row"><span class="k">Chuva (24h)</span><span><span id="rain24">--</span> mm</span></div>
-          <div class="row"><span class="k">Atualização</span><span id="age">—</span></div>
+        <div class="now-metrics">
+          <div class="m"><span>Nascer</span><strong id="sunrise">--:--</strong></div>
+          <div class="m"><span>Pôr-do-sol</span><strong id="sunset">--:--</strong></div>
+
+          <div class="m"><span>Vento</span>
+            <strong><span id="wind">--</span> km/h</strong>
+          </div>
+          <div class="m"><span>Rajada / Dir</span>
+            <strong><span id="gust">--</span> · <span id="winddir">—</span></strong>
+          </div>
+
+          <div class="m"><span>Humidade</span><strong id="rh">--</strong></div>
+          <div class="m"><span>P. Orvalho</span><strong id="dew">--</strong></div>
+
+          <div class="m"><span>Pressão</span><strong><span id="press">--</span> hPa</strong></div>
+          <div class="m"><span>UV</span><strong id="uv">--</strong></div>
+
+          <div class="m"><span>Chuva (24h)</span><strong><span id="rain24">--</span> mm</strong></div>
+          <div class="m"><span>Atualização</span><strong id="age">—</strong></div>
         </div>
       </section>
 
-      <!-- RODAPÉ DO ECRÃ: previsão 3 dias + gráfico 24h -->
+      <!-- parte inferior: previsão 3 dias + gráfico -->
       <section class="bottom">
-        <aside class="forecast eink">
-          <ul class="mini-forecast" id="forecast"><!-- 3 itens via JS --></ul>
+        <aside class="forecast">
+          <ul id="forecast" class="days"><!-- 3 itens via JS --></ul>
         </aside>
 
-        <section class="chart eink">
-          <div class="chart-title">Últimas 24 horas</div>
+        <section class="chart">
+          <header class="chart-title">Últimas 24 horas</header>
           <div class="chart-canvas">
             <canvas id="histChart"></canvas>
           </div>
           <div class="chart-legend">
-            <span class="dot t"></span> Temperatura &nbsp;
+            <span class="dot t"></span> Temperatura
             <span class="dot r"></span> Precipitação
           </div>
         </section>
       </section>
 
-      <footer class="footer eink">
+      <footer class="foot">
         <span id="staleFlag" class="ok">Ligação excelente</span>
       </footer>
     </main>
