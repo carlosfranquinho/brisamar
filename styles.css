@@ -207,6 +207,7 @@ body {
   display: inline-block;
   width: 10px;
   height: 10px;
+  border:1px solid #0002;
   border-radius: 50%;
 }
 .dot.t {
@@ -286,4 +287,12 @@ body {
   .days {
     grid-template-columns: 1fr;
   }
+}
+
+/* foco visível mas discreto para links/controles, caso existam */
+:focus-visible{ outline: 3px solid #3b82f666; outline-offset: 3px; }
+
+/* respeitar preferência de utilizadores que evitam animações */
+@media (prefers-reduced-motion: reduce){
+  *{ animation: none !important; transition: none !important; }
 }
