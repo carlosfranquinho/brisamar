@@ -33,6 +33,32 @@ const degToDir = (deg) => {
 };
 const localTime = (iso) => new Date(iso);
 
+function setText(sel, text) {
+  const el = $(sel);
+  if (!el) return;
+  const prev = el.dataset.val ?? el.textContent;
+  el.textContent = text;
+  el.dataset.val = text;
+  if (String(prev) !== String(text)) {
+    el.classList.add("pulse");
+    setTimeout(() => el.classList.remove("pulse"), 350);
+  }
+}
+
+let countdownTimer = null,
+  nextRefreshAt = 0;
+function startCountdown(ms) {
+  nextRefreshAt = Date.now() + ms;
+  if (countdownTimer) clearInterval(countdownTimer);
+  countdownTimer = setInterval(() => {
+    const s = Math.max(0, Math.ceil((nextRefreshAt - Date.now()) / 1000));
+    const txt = s === 0 ? "agora" : `em ${s}s`;
+    const el = $("#age");
+    if (el) el.textContent = txt; // sem “pulse” a cada tick
+    if (s === 0) clearInterval(countdownTimer);
+  }, 250);
+}
+
 /* Cabeçalho: data atual */
 (function setNow() {
   const now = new Date();
@@ -190,9 +216,21 @@ async function loadLive() {
     flag.textContent = "Dados desatualizados";
     flag.className = "stale";
   } else {
-    flag.textContent = "Ligação excelente";
+    flag.textContent = "Estação online";
     flag.className = "ok";
   }
+
+  setText("#temp", fmt(j.temp_c, 1));
+  setText("#apparent", fmt(j.apparent_c ?? j.temp_c, 1));
+  setText("#wind", fmt(j.wind_kmh, 0));
+  setText("#winddir", degToDir(j.wind_dir_deg));
+  setText("#gust", fmt(j.gust_kmh, 0));
+  setText("#rh", fmt(j.rh_pct, 0) + "%");
+  setText("#dew", fmt(j.dewpoint_c, 1) + "°");
+  setText("#press", fmt(j.pressure_hpa, 0));
+  setText("#uv", fmt(j.uv_index, 1));
+
+  startCountdown(60000);
 }
 
 /* Histórico 24h -> gráfico */

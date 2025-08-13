@@ -74,10 +74,13 @@ body {
   box-shadow: 0 0 0 6px #fff inset, 0 0 0 2px #e5e7eb inset, 0 4px 16px #0001;
 }
 
-.now-icon svg {
-  width: 68%;
-  height: 68%;
+.now-icon svg{
+  width: 68%; height: 68%;
+  color: rgba(0,0,0,.45);    /* traço mais escuro = legível no amarelo */
+  stroke-width: 2.25;        /* >2 sem perder leveza */
+  filter: drop-shadow(0 1px 0 rgba(255,255,255,.35)); /* subtil realce */
 }
+
 
 .now-temp {
   line-height: 1;
@@ -309,9 +312,15 @@ body {
 
 /* 1) Grau (ºC): alinhamento seguro em todos os browsers */
 .now-temp .deg{
-  display: inline-block;     /* garante que o transform aplica igual em Safari/Firefox */
-  line-height: 1;            /* evita saltos verticais */
+  font-size: 0.72em;         /* 0.6em -> 0.72em */
+  margin-left: 6px;
+  color: var(--accent);
+  vertical-align: text-top;
+  transform: translateY(-0.18em);
+  display: inline-block;     /* garante o transform em todos os browsers */
+  line-height: 1;
 }
+
 
 /* 2) Cartões da previsão: evitar que as temperaturas quebrem linha */
 .days .t{
@@ -333,3 +342,12 @@ body {
 
 /* 6) Ícone grande: se for meramente decorativo, podes usar isto */
 .now-icon[aria-hidden="true"] svg{ pointer-events: none; }
+
+.pulse{
+  animation: pulseColor .35s ease-out;
+}
+@keyframes pulseColor{
+  0%{ color: var(--ink); }
+  20%{ color: var(--accent); }
+  100%{ color: var(--ink); }
+}
