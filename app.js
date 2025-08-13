@@ -1,85 +1,150 @@
-// Endpoint live (usar HTTPS para evitar mixed content)
+/* CONFIG */
 const LIVE_URL = "https://meteomg-tunel.franquinho.info/live";
+const HIST_URL = "https://meteomg-tunel.franquinho.info/history?hours=24";
 
-// refresco automático (segundos)
-const REFRESH_SEC = 60;
+/* IPMA – mete aqui o teu local (globalIdLocal)  */
+const IPMA_GLOBAL_ID = 1110600; // TODO: troca para o teu
+const IPMA_FORECAST = `https://api.ipma.pt/open-data/forecast/meteorology/cities/daily/${IPMA_GLOBAL_ID}.json`;
 
-const el = id => document.getElementById(id);
+/* Helpers */
+const $ = sel => document.querySelector(sel);
+const fmt = (n, d=0) => (n == null || isNaN(n)) ? "—" : Number(n).toFixed(d);
+const degToDir = (deg) => {
+  if (deg == null) return "—";
+  const dirs = ["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSO","SO","OSO","O","ONO","NO","NNO"];
+  return dirs[Math.round(((deg%360)+360)%360 / 22.5) % 16];
+};
+const localTime = (iso) => new Date(iso);
 
-function fmt(n, d=1){
-  if (n === null || n === undefined || isNaN(n)) return "--";
-  return Number(n).toFixed(d).replace(".", ",");
+/* Cabeçalho: data atual */
+(function setNow(){
+  const now = new Date();
+  const fmtDate = now.toLocaleDateString('pt-PT',{weekday:'long', day:'numeric', month:'long'});
+  $("#nowDate").textContent = fmtDate.charAt(0).toUpperCase()+fmtDate.slice(1);
+})();
+
+/* Sun times (coordenadas aproximadas – ajusta para tua estação) */
+const LAT = 39.75, LON = -8.94; 
+function setSunTimes(date=new Date()){
+  const t = SunCalc.getTimes(date, LAT, LON);
+  const opt = {hour:'2-digit', minute:'2-digit'};
+  $("#sunrise").textContent = t.sunrise.toLocaleTimeString('pt-PT',opt);
+  $("#sunset").textContent  = t.sunset.toLocaleTimeString('pt-PT',opt);
 }
-function timeAgo(tsIso){
+
+/* Previsão IPMA (3 dias) */
+async function loadForecast(){
   try{
-    const ts = new Date(tsIso);
-    const now = new Date();
-    const sec = Math.max(0, Math.round((now - ts)/1000));
-    if (sec < 60) return `${sec}s atrás`;
-    const m = Math.round(sec/60);
-    if (m < 60) return `${m} min atrás`;
-    const h = Math.round(m/60);
-    return `${h} h atrás`;
-  }catch{ return "—"; }
-}
-function setWindArrow(deg){
-  if (deg == null || isNaN(deg)) return;
-  // seta aponta PARA norte; rodamos para “vir de” (meteo: direção de origem)
-  el("windArrow").style.transform = `translateX(-50%) rotate(${deg}deg)`;
-}
-
-async function fetchLive(){
-  const res = await fetch(LIVE_URL, { cache: "no-store" });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return res.json();
-}
-
-async function update(){
-  try{
-    const live = await fetchLive();
-
-    // valores
-    el("temp_c").textContent        = fmt(live.temp_c, 1);
-    el("apparent_c").textContent    = fmt(live.apparent_c, 1);
-    el("rh_pct").textContent        = fmt(live.rh_pct, 0);
-    el("dewpoint_c").textContent    = fmt(live.dewpoint_c, 1);
-    el("wind_kmh").textContent      = fmt(live.wind_kmh, 1);
-    el("gust_kmh").textContent      = fmt(live.gust_kmh, 1);
-    el("pressure_hpa").textContent  = fmt(live.pressure_hpa, 1);
-    el("rain_day_mm").textContent   = fmt(live.rain_day_mm, 2);
-    el("rain_rate_mmph").textContent= fmt(live.rain_rate_mmph, 2);
-    el("solar_wm2").textContent     = fmt(live.solar_wm2, 0);
-    el("uv_index").textContent      = fmt(live.uv_index, 1);
-
-    // direção do vento
-    el("wind_dir_deg").textContent = live.wind_dir_deg != null ? live.wind_dir_deg : "--";
-    setWindArrow(Number(live.wind_dir_deg));
-
-    // timestamps / stale
-    el("ts_local").textContent = live.ts_local
-      ? new Date(live.ts_local).toLocaleString("pt-PT")
-      : "—";
-
-    const age = typeof live.age_s === "number" ? live.age_s : null;
-    el("ageText").textContent = age != null ? `atualizado há ${Math.round(age)}s` : "—";
-
-    const stale = !!live.stale;
-    el("staleBadge").classList.toggle("hidden", !stale);
-    document.title = stale ? "⚠️ Brisamar — sem dados recentes" : "Brisamar — tempo em tempo real";
-  }catch(err){
-    console.error("Falha a obter /live:", err);
-    el("staleBadge").classList.remove("hidden");
-    el("staleBadge").textContent = "falha ao obter dados";
-    el("ageText").textContent = "—";
+    const r = await fetch(IPMA_FORECAST, {cache:"no-store"});
+    const j = await r.json();
+    const days = j.data?.slice(0,3) || [];
+    const ul = $("#forecast");
+    ul.innerHTML = "";
+    days.forEach(d=>{
+      const li = document.createElement("li");
+      const day = new Date(d.forecastDate);
+      const label = day.toLocaleDateString('pt-PT',{weekday:'short'});
+      li.innerHTML = `
+        <div class="d">${label}</div>
+        <div class="ic">⛅</div>
+        <div class="t">${Math.round(d.tMax)}° | ${Math.round(d.tMin)}°</div>
+      `;
+      ul.appendChild(li);
+    });
+  }catch(e){
+    console.warn("IPMA falhou:", e);
   }
 }
 
-function tick(){
-  update().finally(() => {
-    setTimeout(tick, REFRESH_SEC * 1000);
+/* Live */
+async function loadLive(){
+  const r = await fetch(LIVE_URL, {cache:"no-store", mode:"cors", credentials:"omit"});
+  if(!r.ok) throw new Error("live "+r.status);
+  const j = await r.json();
+
+  $("#temp").textContent = fmt(j.temp_c, 0);
+  $("#apparent").textContent = fmt(j.apparent_c ?? j.temp_c, 0);
+  $("#wind").textContent = fmt(j.wind_kmh, 0);
+  $("#winddir").textContent = degToDir(j.wind_dir_deg);
+  $("#gust").textContent = fmt(j.gust_kmh, 0);
+  $("#rh").textContent = fmt(j.rh_pct, 0) + "%";
+  $("#dew").textContent = fmt(j.dewpoint_c, 1) + "°";
+  $("#press").textContent = fmt(j.pressure_hpa, 0);
+  $("#uv").textContent = fmt(j.uv_index, 1);
+
+  const ts = localTime(j.ts_local ?? j.ts_utc);
+  setSunTimes(ts);
+
+  $("#age").textContent = j.age_s != null ? `${Math.round(j.age_s)} s` : "—";
+  const flag = $("#staleFlag");
+  if (j.stale) { flag.textContent = "Dados desatualizados"; flag.className="stale"; }
+  else { flag.textContent = "Ligação excelente"; flag.className="ok"; }
+}
+
+/* Histórico 24h -> gráfico */
+let chart;
+async function loadHistory(){
+  const r = await fetch(HIST_URL, {cache:"no-store"});
+  if(!r.ok) throw new Error("hist "+r.status);
+  const rows = await r.json();
+  // Esperado: [{ts_utc, temp_c, rain_day_mm, rain_rate_mmph}, ...] crescente no tempo
+  const labels = rows.map(x => new Date(x.ts_utc));
+  const temps  = rows.map(x => x.temp_c);
+  // mm/h usados como barras
+  const rainRate = rows.map(x => x.rain_rate_mmph ?? 0);
+
+  // soma chuva das últimas 24h (pelo rate ou delta do rain_day_mm se preferires)
+  const rain24 = rainRate.reduce((a,b)=> a + (b||0)/6, 0); // aproximação 10-min -> 1/6h
+  $("#rain24").textContent = fmt(rain24,1);
+
+  // chart
+  const ctx = $("#histChart");
+  if (chart) chart.destroy();
+  chart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labels.map(t => t.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'})),
+      datasets: [
+        {
+          type:'line',
+          label:'Temperatura (°C)',
+          data: temps,
+          yAxisID:'y1',
+          borderColor:'#000',
+          backgroundColor:'rgba(0,0,0,0)',
+          tension:.25,
+          borderWidth:2,
+          pointRadius:0
+        },
+        {
+          type:'bar',
+          label:'Precipitação (mm/h)',
+          data: rainRate,
+          yAxisID:'y2',
+          backgroundColor:'#999',
+          borderColor:'#000',
+          borderWidth:1,
+          maxBarThickness:18
+        }
+      ]
+    },
+    options:{
+      responsive:true,
+      maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, tooltip:{enabled:true} },
+      scales:{
+        x:{ grid:{color:'#0002'} },
+        y1:{ position:'left', grid:{color:'#0002'}, suggestedMin:10, suggestedMax:35, ticks:{stepSize:5} },
+        y2:{ position:'right', grid:{display:false}, suggestedMax:10 }
+      }
+    }
   });
 }
 
-// boot
-el("year").textContent = new Date().getFullYear();
-tick();
+/* Boot */
+async function boot(){
+  await Promise.all([loadLive(), loadForecast(), loadHistory()]);
+  // refrescar live a cada 60s (gráfico pode ficar estático)
+  setInterval(loadLive, 60000);
+}
+boot().catch(console.error);

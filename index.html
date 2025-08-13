@@ -1,85 +1,85 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Brisamar — tempo em tempo real</title>
-  <meta name="description" content="Brisamar — Observação do tempo na Marinha Grande, em tempo real." />
-  <link rel="preconnect" href="https://meteomg-tunel.franquinho.info" crossorigin>
+  <title>Brisamar · Estação</title>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" />
   <link rel="stylesheet" href="styles.css" />
+  <!-- Chart.js para o gráfico -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
+  <!-- SunCalc para nascer/pôr-do-sol -->
+  <script src="https://cdn.jsdelivr.net/npm/suncalc@1.9.0/suncalc.min.js" defer></script>
+  <script src="app.js" defer></script>
 </head>
 <body>
-  <header class="site-header">
-    <div class="brand">
-      <div class="logo">🌬️</div>
-      <div>
-        <h1>Brisamar</h1>
-        <p class="subtitle">Tempo em tempo real — Marinha Grande</p>
+  <main class="wrap">
+    <!-- Cabeçalho -->
+    <header class="header eink">
+      <div class="place">
+        <h1 id="place">Brisamar</h1>
+        <div id="nowDate">—</div>
       </div>
-    </div>
-    <div class="status">
-      <span id="staleBadge" class="badge hidden">sem dados recentes</span>
-      <span id="ageText" class="age">—</span>
-    </div>
-  </header>
-
-  <main class="container">
-    <section class="grid">
-      <article class="card">
-        <h2>Temperatura</h2>
-        <div class="value big"><span id="temp_c">--</span><span class="unit">°C</span></div>
-        <div class="sub">aparente: <span id="apparent_c">--</span> °C</div>
-      </article>
-
-      <article class="card">
-        <h2>Humidade</h2>
-        <div class="value big"><span id="rh_pct">--</span><span class="unit">%</span></div>
-        <div class="sub">ponto de orvalho: <span id="dewpoint_c">--</span> °C</div>
-      </article>
-
-      <article class="card">
-        <h2>Vento</h2>
-        <div class="value">
-          <span id="wind_kmh" class="big">--</span><span class="unit">km/h</span>
+      <div class="big-temp">
+        <div class="icon-clouds" aria-hidden="true"></div>
+        <div>
+          <div class="temp"><span id="temp">--</span><span class="deg">°C</span></div>
+          <div class="feels">sensação <span id="apparent">--</span>°</div>
         </div>
-        <div class="sub">rajada: <span id="gust_kmh">--</span> km/h</div>
-        <div class="wind">
-          <div class="compass">
-            <div id="windArrow" class="arrow">▲</div>
-            <div class="rose">N</div>
-          </div>
-          <div class="dir"><span id="wind_dir_deg">--</span>°</div>
+      </div>
+      <ul class="mini-forecast" id="forecast">
+        <!-- 3 itens injectados via JS -->
+      </ul>
+    </header>
+
+    <!-- Corpo: painel + gráfico -->
+    <section class="content">
+      <aside class="side eink">
+        <div class="row">
+          <div class="k">Nascer</div><div id="sunrise">--:--</div>
         </div>
-      </article>
+        <div class="row">
+          <div class="k">Pôr-do-sol</div><div id="sunset">--:--</div>
+        </div>
+        <div class="row">
+          <div class="k">Vento</div>
+          <div><span id="wind">--</span> km/h <span class="muted">↗</span><span id="winddir">—</span></div>
+        </div>
+        <div class="row">
+          <div class="k">Rajada</div><div id="gust">--</div>
+        </div>
+        <div class="row">
+          <div class="k">Humidade</div><div id="rh">--</div>
+        </div>
+        <div class="row">
+          <div class="k">Ponto orvalho</div><div id="dew">--</div>
+        </div>
+        <div class="row">
+          <div class="k">Pressão</div><div><span id="press">--</span> hPa</div>
+        </div>
+        <div class="row">
+          <div class="k">UV</div><div id="uv">--</div>
+        </div>
+        <div class="row">
+          <div class="k">Chuva (24h)</div><div><span id="rain24">--</span> mm</div>
+        </div>
+        <div class="row">
+          <div class="k">Atualização</div><div id="age">—</div>
+        </div>
+      </aside>
 
-      <article class="card">
-        <h2>Pressão</h2>
-        <div class="value big"><span id="pressure_hpa">--</span><span class="unit"> hPa</span></div>
-      </article>
-
-      <article class="card">
-        <h2>Chuva (dia)</h2>
-        <div class="value big"><span id="rain_day_mm">--</span><span class="unit"> mm</span></div>
-        <div class="sub">taxa: <span id="rain_rate_mmph">--</span> mm/h</div>
-      </article>
-
-      <article class="card">
-        <h2>Rad. Solar</h2>
-        <div class="value big"><span id="solar_wm2">--</span><span class="unit"> W/m²</span></div>
-        <div class="sub">UV: <span id="uv_index">--</span></div>
-      </article>
+      <section class="chart eink">
+        <div class="chart-title">Últimas 24 horas</div>
+        <canvas id="histChart"></canvas>
+        <div class="chart-legend">
+          <span class="dot t"></span> Temperatura &nbsp; <span class="dot r"></span> Precipitação
+        </div>
+      </section>
     </section>
 
-    <section class="meta">
-      <div>Atualizado: <span id="ts_local">—</span></div>
-      <div class="muted">Fonte: estação “meteomg” (via túnel)</div>
-    </section>
+    <footer class="footer eink">
+      <span id="staleFlag" class="ok">Ligação excelente</span>
+    </footer>
   </main>
-
-  <footer class="site-footer">
-    <div>© <span id="year"></span> Brisamar — projeto pessoal</div>
-  </footer>
-
-  <script src="app.js"></script>
 </body>
 </html>
