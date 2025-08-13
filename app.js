@@ -88,42 +88,42 @@ async function loadHistory(){
   if (!r.ok) throw new Error("hist " + r.status);
   const rows = await r.json();
 
-  // helpers seguros
-  const num  = v => { const n = Number(v); return Number.isFinite(n) ? n : null; };
-  const znum = v => { const n = Number(v); return Number.isFinite(n) ? n : 0; };
-  const clamp = (v,min,max) => Math.max(min, Math.min(max, v));
+  // usa ts_local quando existir (string "YYYY-MM-DD HH:MM:SS" -> Date local)
+  const toLocalDate = x => {
+    if (x.ts_local) return new Date(x.ts_local.replace(' ', 'T'));
+    // fallback: ts_utc ISO ou "YYYY-MM-DD HH:MM:SS" tratado como UTC
+    return new Date(x.ts_utc.endsWith('Z') ? x.ts_utc : x.ts_utc.replace(' ', 'T') + 'Z');
+  };
 
-  // arrays
-  const labels     = rows.map(x => new Date(x.ts_utc));
-  const tempsRaw   = rows.map(x => num(x.temp_c));              // pode ter null
-  const tempsFixed = tempsRaw.map(v => (v == null ? null : clamp(v, 0, 43)));
-  const rainRate   = rows.map(x => znum(x.rain_rate_mmph));     // null/NaN -> 0
+  const labels     = rows.map(toLocalDate);
+  const rawTemps   = rows.map(x => Number.isFinite(+x.temp_c) ? +x.temp_c : null);
+  const rainRate   = rows.map(x => Number.isFinite(+x.rain_rate_mmph) ? +x.rain_rate_mmph : 0);
 
-  // chuva aproximada 24h (amostragem ~10min => 1/6h por ponto)
+  // filtra lixo (NULL, < -10 ou > 55) -> gap no gráfico
+  const temps = rawTemps.map(v => (v == null || v < -10 || v > 55) ? null : Math.max(0, Math.min(43, v)));
+
+  // chuva 24h (amostragem ~10 min => 1/6 h por ponto)
   const rain24 = rainRate.reduce((a,b)=> a + b/6, 0);
   $("#rain24").textContent = fmt(rain24, 1);
 
-  // gráfico
   const ctx = $("#histChart");
   if (chart) chart.destroy();
   chart = new Chart(ctx, {
     type: 'bar',
     data: {
-      labels: labels.map(t =>
-        t.toLocaleTimeString('pt-PT', { hour:'2-digit', minute:'2-digit' })
-      ),
+      labels: labels.map(t => t.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'})),
       datasets: [
         {
           type:'line',
           label:'Temperatura (°C)',
-          data: tempsFixed,        // <- null cria “gap” (não liga pontos inválidos)
+          data: temps,                // <- null cria gap
           yAxisID:'y1',
           borderColor:'#000',
           backgroundColor:'rgba(0,0,0,0)',
           tension:.25,
           borderWidth:2,
           pointRadius:0,
-          spanGaps:false           // não ligar por cima de null; mete true se preferires
+          spanGaps:false              // não ligar por cima de null
         },
         {
           type:'bar',
@@ -139,26 +139,13 @@ async function loadHistory(){
     },
     options:{
       responsive:true,
-      maintainAspectRatio:false,  // parent precisa de altura definida (ver CSS abaixo)
-      // Normalizar os dados causava problemas quando todos os valores eram 0 ou nulos,
-      // levando o gráfico a crescer indefinidamente. Mantemos os valores originais.
-      normalized:false,
-      animation:false,
+      maintainAspectRatio:false,
+      normalized:true,
       plugins:{ legend:{display:false}, tooltip:{enabled:true} },
       scales:{
-        x:{ grid:{ color:'#0002' } },
-        y1:{
-          position:'left',
-          grid:{ color:'#0002' },
-          min:0, max:43,           // limites fixos
-          ticks:{ stepSize:5 }
-        },
-        y2:{
-          position:'right',
-          grid:{ display:false },
-          beginAtZero:true,
-          suggestedMax:10
-        }
+        x:{ grid:{color:'#0002'} },
+        y1:{ position:'left', grid:{color:'#0002'}, min:0, max:43, ticks:{stepSize:5} },
+        y2:{ position:'right', grid:{display:false}, beginAtZero:true, suggestedMax:10 }
       }
     }
   });
