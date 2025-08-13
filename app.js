@@ -137,19 +137,19 @@ async function loadHistory(){
         }
       ]
     },
-options:{
-  responsive: true,
-  maintainAspectRatio: false,
-  resizeDelay: 200,        // <- amortece o observador de resize
-  normalized: true,
-  animation: false,
-  plugins:{ legend:{display:false}, tooltip:{enabled:true} },
-  scales:{
-    x:{ grid:{color:'#0002'} },
-    y1:{ position:'left', grid:{color:'#0002'}, min:0, max:43, ticks:{stepSize:5} },
-    y2:{ position:'right', grid:{display:false}, beginAtZero:true, suggestedMax:10 }
-  }
-}
+    options:{
+      responsive:true,
+      maintainAspectRatio:false,
+      resizeDelay: 200, 
+      normalized:true,
+      animation: false,
+      plugins:{ legend:{display:false}, tooltip:{enabled:true} },
+      scales:{
+        x:{ grid:{color:'#0002'} },
+        y1:{ position:'left', grid:{color:'#0002'}, min:0, max:43, ticks:{stepSize:5} },
+        y2:{ position:'right', grid:{display:false}, beginAtZero:true, suggestedMax:10 }
+      }
+    }
   });
 }
 
