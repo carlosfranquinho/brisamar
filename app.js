@@ -97,6 +97,26 @@ async function loadHistory(){
   const rain24 = rainRate.reduce((a,b)=> a + (b||0)/6, 0); // aproximação 10-min -> 1/6h
   $("#rain24").textContent = fmt(rain24,1);
 
+/* Histórico 24h -> gráfico */
+let chart;
+async function loadHistory(){
+  const r = await fetch(HIST_URL, { cache: "no-store" });
+  if(!r.ok) throw new Error("hist " + r.status);
+  const rows = await r.json();
+
+  // Esperado: [{ts_utc, temp_c, rain_day_mm, rain_rate_mmph}, ...] crescente no tempo
+  const labels   = rows.map(x => new Date(x.ts_utc));
+  const temps    = rows.map(x => x.temp_c);
+  const rainRate = rows.map(x => x.rain_rate_mmph ?? 0);
+
+  // soma chuva das últimas 24h (aprox. se amostragem ~10min => 1/6 h por ponto)
+  const rain24 = rainRate.reduce((a,b)=> a + (b||0)/6, 0);
+  $("#rain24").textContent = fmt(rain24, 1);
+
+  // OPCIONAL: limitar visualmente a série de temperatura ao intervalo [0, 43]
+  const clamp = (v,min,max) => Math.max(min, Math.min(max, v));
+  const tempsClamped = temps.map(v => clamp(v, 0, 43));
+
   // chart
   const ctx = $("#histChart");
   if (chart) chart.destroy();
@@ -108,7 +128,7 @@ async function loadHistory(){
         {
           type:'line',
           label:'Temperatura (°C)',
-          data: temps,
+          data: tempsClamped,           // <- usa a série limitada
           yAxisID:'y1',
           borderColor:'#000',
           backgroundColor:'rgba(0,0,0,0)',
@@ -134,12 +154,24 @@ async function loadHistory(){
       plugins:{ legend:{display:false}, tooltip:{enabled:true} },
       scales:{
         x:{ grid:{color:'#0002'} },
-        y1:{ position:'left', grid:{color:'#0002'}, suggestedMin:10, suggestedMax:35, ticks:{stepSize:5} },
-        y2:{ position:'right', grid:{display:false}, suggestedMax:10 }
+        y1:{                           // eixo da temperatura
+          position:'left',
+          grid:{ color:'#0002' },
+          min: 0,                      // <- limites fixos
+          max: 43,                     // <-
+          ticks:{ stepSize: 5 }
+        },
+        y2:{                           // precipitação
+          position:'right',
+          grid:{ display:false },
+          beginAtZero: true,
+          suggestedMax: 10
+        }
       }
     }
   });
 }
+
 
 /* Boot */
 async function boot(){
