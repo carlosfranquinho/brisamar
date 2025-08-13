@@ -3,7 +3,7 @@ const LIVE_URL = "https://meteomg-tunel.franquinho.info/live";
 const HIST_URL = "https://meteomg-tunel.franquinho.info/history?hours=24";
 
 /* IPMA – mete aqui o teu local (globalIdLocal)  */
-const IPMA_GLOBAL_ID = 1110900; 
+const IPMA_GLOBAL_ID = 1100900; 
 const IPMA_FORECAST = `https://api.ipma.pt/open-data/forecast/meteorology/cities/daily/${IPMA_GLOBAL_ID}.json`;
 
 /* Helpers */
@@ -85,40 +85,45 @@ async function loadLive(){
 let chart;
 async function loadHistory(){
   const r = await fetch(HIST_URL, { cache: "no-store" });
-  if(!r.ok) throw new Error("hist " + r.status);
+  if (!r.ok) throw new Error("hist " + r.status);
   const rows = await r.json();
 
-  // Esperado: [{ts_utc, temp_c, rain_day_mm, rain_rate_mmph}, ...] crescente no tempo
-  const labels   = rows.map(x => new Date(x.ts_utc));
-  const temps    = rows.map(x => x.temp_c);
-  const rainRate = rows.map(x => x.rain_rate_mmph ?? 0);
+  // helpers seguros
+  const num  = v => { const n = Number(v); return Number.isFinite(n) ? n : null; };
+  const znum = v => { const n = Number(v); return Number.isFinite(n) ? n : 0; };
+  const clamp = (v,min,max) => Math.max(min, Math.min(max, v));
 
-  // soma chuva das últimas 24h (aprox. se amostragem ~10min => 1/6 h por ponto)
-  const rain24 = rainRate.reduce((a,b)=> a + (b||0)/6, 0);
+  // arrays
+  const labels     = rows.map(x => new Date(x.ts_utc));
+  const tempsRaw   = rows.map(x => num(x.temp_c));              // pode ter null
+  const tempsFixed = tempsRaw.map(v => (v == null ? null : clamp(v, 0, 43)));
+  const rainRate   = rows.map(x => znum(x.rain_rate_mmph));     // null/NaN -> 0
+
+  // chuva aproximada 24h (amostragem ~10min => 1/6h por ponto)
+  const rain24 = rainRate.reduce((a,b)=> a + b/6, 0);
   $("#rain24").textContent = fmt(rain24, 1);
 
-  // OPCIONAL: limitar visualmente a série de temperatura ao intervalo [0, 43]
-  const clamp = (v,min,max) => Math.max(min, Math.min(max, v));
-  const tempsClamped = temps.map(v => clamp(v, 0, 43));
-
-  // chart
+  // gráfico
   const ctx = $("#histChart");
   if (chart) chart.destroy();
   chart = new Chart(ctx, {
     type: 'bar',
     data: {
-      labels: labels.map(t => t.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'})),
+      labels: labels.map(t =>
+        t.toLocaleTimeString('pt-PT', { hour:'2-digit', minute:'2-digit' })
+      ),
       datasets: [
         {
           type:'line',
           label:'Temperatura (°C)',
-          data: tempsClamped,           // <- usa a série limitada
+          data: tempsFixed,        // <- null cria “gap” (não liga pontos inválidos)
           yAxisID:'y1',
           borderColor:'#000',
           backgroundColor:'rgba(0,0,0,0)',
           tension:.25,
           borderWidth:2,
-          pointRadius:0
+          pointRadius:0,
+          spanGaps:false           // não ligar por cima de null; mete true se preferires
         },
         {
           type:'bar',
@@ -134,27 +139,29 @@ async function loadHistory(){
     },
     options:{
       responsive:true,
-      maintainAspectRatio:false,
+      maintainAspectRatio:false,  // parent precisa de altura definida (ver CSS abaixo)
+      normalized:true,            // ignora outliers/NaN em cálculos internos
+      animation:false,
       plugins:{ legend:{display:false}, tooltip:{enabled:true} },
       scales:{
-        x:{ grid:{color:'#0002'} },
-        y1:{                           // eixo da temperatura
+        x:{ grid:{ color:'#0002' } },
+        y1:{
           position:'left',
           grid:{ color:'#0002' },
-          min: 0,                      // <- limites fixos
-          max: 43,                     // <-
-          ticks:{ stepSize: 5 }
+          min:0, max:43,           // limites fixos
+          ticks:{ stepSize:5 }
         },
-        y2:{                           // precipitação
+        y2:{
           position:'right',
           grid:{ display:false },
-          beginAtZero: true,
-          suggestedMax: 10
+          beginAtZero:true,
+          suggestedMax:10
         }
       }
     }
   });
 }
+
 
 /* Boot */
 async function boot(){
