@@ -62,6 +62,7 @@ body{
 .content{
   display:grid; gap:var(--grid-gap);
   grid-template-columns: 340px 1fr;
+  min-height: 0;
 }
 .side .row{
   display:flex; justify-content:space-between; padding:8px 0;
@@ -79,6 +80,22 @@ body{
 .dot{display:inline-block; width:10px; height:10px; border-radius:50%; border:2px solid var(--ink); margin-right:6px}
 .dot.t{background:#ddd}
 .dot.r{background:#999}
+
+/* cartão do gráfico: container com altura controlada */
+.chart.eink{
+  position: relative;
+  min-height: 0;
+  height: clamp(220px, 45vh, 420px);  /* altura responsiva mas limitada */
+  overflow: hidden;                    /* evita que conteúdo force crescimento */
+}
+
+#histChart{
+  position: absolute;
+  inset: 0;
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}
 
 /* Footer */
 .footer{display:flex; justify-content:flex-end}
