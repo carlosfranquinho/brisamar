@@ -13,6 +13,12 @@
     box-sizing: border-box;
 }
 
+img,
+svg {
+    max-width: 100%;
+    height: auto;
+}
+
 html,
 body {
     height: 100%;
@@ -166,7 +172,11 @@ body {
     color: var(--muted);
 }
 
-#forecast .ic { display:flex; align-items:center; justify-content:center; }
+#forecast .ic {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
 
 .days {
     list-style: none;
@@ -283,7 +293,11 @@ body {
 
 /* ícones Brisa Marinha */
 
-.bm-ico { width: 96px; height: 96px; display:inline-block; }
+.bm-ico {
+    width: 96px;
+    height: 96px;
+    display: inline-block;
+}
 
 
 .bm-ico.sunny {
@@ -314,59 +328,9 @@ body {
     height: 48px;
 }
 
-/* responsivo */
-@media (max-width: 980px) {
-    .hero-top {
-        grid-template-columns: minmax(320px, 680px) 1fr;
-    }
-
-    .bottom {
-        grid-template-columns: 1fr;
-    }
-
-    .days {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .days li {
-        flex: 1;
-    }
-
-    .hero-head {
-        margin-top: 0;
-    }
-}
-
-@media (max-height: 780px) {
-    .hero-top {
-        min-height: 36vh;
-    }
-
-    .chart-canvas {
-        height: clamp(200px, 24vh, 320px);
-    }
-
-    .shell {
-        padding-block: clamp(8px, 1.5vh, 18px);
-    }
-}
-
-@media (max-width: 520px) {
-    .days {
-        grid-template-columns: 1fr;
-    }
-}
-
 :focus-visible {
     outline: 3px solid #3b82f666;
     outline-offset: 3px;
-}
-
-@media (prefers-reduced-motion: reduce) {
-    * {
-        animation: none !important;
-        transition: none !important;
-    }
 }
 
 .days .t {
@@ -382,12 +346,6 @@ body {
 .days li {
     display: grid;
     grid-auto-rows: min-content;
-}
-
-@media (min-width: 1280px) {
-    .now-metrics {
-        grid-template-columns: repeat(2, minmax(280px, 1fr));
-    }
 }
 
 .chart-canvas {
@@ -413,5 +371,119 @@ body {
 
     100% {
         color: var(--ink);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation: none !important;
+        transition: none !important;
+    }
+}
+
+@media (min-width: 1280px) {
+    .now-metrics {
+        grid-template-columns: repeat(2, minmax(280px, 1fr));
+    }
+}
+
+@media (max-width: 980px) {
+    .hero-top {
+        grid-template-columns: minmax(320px, 680px) 1fr;
+    }
+
+    .bottom {
+        grid-template-columns: 1fr;
+    }
+
+    .days {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .days li {
+        flex: 1;
+    }
+
+    .hero-head {
+        margin-top: 0;
+    }
+}
+
+@media (max-width: 900px) {
+    .hero-top {
+        gap: 20px;
+    }
+
+    .now-metrics {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-height: 780px) {
+    .hero-top {
+        min-height: 36vh;
+    }
+
+    .chart-canvas {
+        height: clamp(200px, 24vh, 320px);
+    }
+
+    .shell {
+        padding-block: clamp(8px, 1.5vh, 18px);
+    }
+}
+
+@media (max-width: 760px) {
+    .hero-top {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto;
+        align-items: start;
+        min-height: unset;
+        gap: 16px;
+    }
+
+    .now-left {
+        justify-content: center;
+    }
+
+    .now-metrics {
+        grid-template-columns: 1fr;
+        gap: 8px 12px;
+    }
+
+    .now-metrics span {
+        min-width: 0;
+    }
+
+    .now-metrics .m {
+        padding: 8px 0;
+    }
+
+    .bottom {
+        grid-template-columns: 1fr;
+    }
+
+    .days {
+        grid-template-columns: 1fr;
+    }
+
+    #bm-now-ico {
+        width: clamp(64px, 22vw, 96px);
+        height: clamp(64px, 22vw, 96px);
+    }
+
+    .bm-ico--sm {
+        width: 40px;
+        height: 40px;
+    }
+
+    .chart-canvas {
+        height: clamp(200px, 36vh, 340px);
+    }
+}
+
+@media (max-width: 520px) {
+    .days {
+        grid-template-columns: 1fr;
     }
 }
