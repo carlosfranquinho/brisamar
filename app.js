@@ -115,29 +115,28 @@ function iconNameFromIpma(code, isDaytime) {
 
 // Aplica no ícone grande do topo
 function renderNowIcon(ipmaCode, sunriseHHMM, sunsetHHMM) {
-    const day = isDay(Date.now(), sunriseHHMM, sunsetHHMM);
-    const name = iconNameFromIpma(ipmaCode, day);
-    const use = document.querySelector("#bm-now-ico use");
-    if (use) use.setAttribute("href", `#bm-icon-${name}`);
+  const day  = isDay(Date.now(), sunriseHHMM, sunsetHHMM);
+  const name = iconNameFromIpma(ipmaCode, day);
+  const svg  = document.getElementById("bm-now-ico");
+  const use  = svg?.querySelector("use");
 
-    const svg = document.getElementById("bm-now-ico");
-    if (!svg) return;
-    svg.classList.remove("sunny", "alert", "neutral");
-    if (
-        [
-            "clear-day",
-            "clear-night",
-            "partly-cloudy-day",
-            "partly-cloudy-night",
-        ].includes(name)
-    )
-        svg.classList.add("sunny");
-    else if (["thunder", "heavy-rain"].includes(name)) svg.classList.add("alert");
-    else svg.classList.add("neutral");
+  if (use){
+    const ref = `#bm-icon-${name}`;
+    use.setAttribute("href", ref);
+    use.setAttribute("xlink:href", ref); // fallback para Safari/antigos
+  }
+
+  if (!svg) return;
+  svg.classList.remove("sunny","alert","neutral");
+  if (["clear-day","clear-night","partly-cloudy-day","partly-cloudy-night"].includes(name)) {
+    svg.classList.add("sunny");
+  } else if (["thunder","heavy-rain"].includes(name)) {
+    svg.classList.add("alert");
+  } else {
+    svg.classList.add("neutral");
+  }
 }
 
-// exemplo de chamada (coloca isto onde já tens os dados prontos):
-// renderNowIcon(idTipoTempoDoIPMA, document.getElementById('sunrise').textContent, document.getElementById('sunset').textContent);
 
 /* Sun times (coordenadas aproximadas – ajusta para tua estação) */
 const LAT = 39.75,

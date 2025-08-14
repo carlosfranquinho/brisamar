@@ -63,24 +63,24 @@ body {
     min-height: 40vh;
 }
 
-/* ícone + temperatura */
 .now-left {
     display: flex;
     align-items: center;
     gap: clamp(12px, 2vw, 24px);
 }
 
-.now-icon{
-  width:auto;
-  height:auto;
-  background: none;
-  border: 0;
-  border-radius: 0;
-  box-shadow: none;
-  padding: 0;
+.now-icon {
+    background: none;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    padding: 0;
 }
 
-.now-icon svg{ width:auto; height:auto; }
+.now-icon svg {
+    width: unset;
+    height: unset;
+}
 
 .now-temp {
     line-height: 1;
@@ -283,7 +283,7 @@ body {
 .bm-ico {
     width: 72px;
     height: 72px;
-    color: var(--icon, #5b87c8);
+    color: var(--ink);
 }
 
 .bm-ico.sunny {
@@ -301,10 +301,11 @@ body {
 }
 
 /* Ícone grande (topo) */
-#bm-now-ico {}
-
-#bm-now-ico *{
-  stroke-width: 2.25;
+#bm-now-ico {
+    width: clamp(72px, 9vw, 120px);
+    height: clamp(72px, 9vw, 120px);
+    display: block;
+    /* evita “baseline gaps” em inline SVG */
 }
 
 /* Ícones dos cartões de previsão */
