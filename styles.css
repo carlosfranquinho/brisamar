@@ -70,26 +70,17 @@ body {
     gap: clamp(12px, 2vw, 24px);
 }
 
-.now-icon {
-    position: relative;
-    width: clamp(68px, 8.5vw, 112px);
-    height: clamp(68px, 8.5vw, 112px);
-    border-radius: 50%;
-    display: grid;
-    place-items: center;
-    background: transparent;
-    border: 3px solid #e5e7eb;
-    box-shadow: 0 1px 6px #0001;
+.now-icon{
+  width:auto;
+  height:auto;
+  background: none;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0;
 }
 
-.now-icon svg {
-    width: 68%;
-    height: 68%;
-    color: rgba(0, 0, 0, .45);
-    stroke-width: 2.25;
-    filter: drop-shadow(0 1px 0 rgba(255, 255, 255, .35));
-}
-
+.now-icon svg{ width:auto; height:auto; }
 
 .now-temp {
     line-height: 1;
@@ -293,7 +284,6 @@ body {
     width: 72px;
     height: 72px;
     color: var(--icon, #5b87c8);
-    /* azul suave */
 }
 
 .bm-ico.sunny {
@@ -310,10 +300,12 @@ body {
     color: #7a8ca8;
 }
 
-/* nublado/nevoeiro */
-
 /* Ícone grande (topo) */
 #bm-now-ico {}
+
+#bm-now-ico *{
+  stroke-width: 2.25;
+}
 
 /* Ícones dos cartões de previsão */
 .bm-ico--sm {
