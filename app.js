@@ -236,8 +236,8 @@ async function loadForecast() {
         i === 0
           ? "hoje"
           : i === 1
-            ? "amanhã"
-            : day.toLocaleDateString("pt-PT", { weekday: "short" });
+          ? "amanhã"
+          : day.toLocaleDateString("pt-PT", { weekday: "short" });
 
       const iconName = iconNameFromIpma(d.idWeatherType, /*isDaytime*/ true);
 
@@ -264,7 +264,6 @@ async function loadForecast() {
   }
 }
 
-
 function appendLivePointToChart(j) {
   if (!chart || !HISTORY_WINDOW_POINTS) return;
 
@@ -278,12 +277,22 @@ function appendLivePointToChart(j) {
   );
   const tms = t.getTime();
 
+  const toNum = (v) => (v == null ? null : Number(v));
+  const isNum = (v) => typeof v === "number" && Number.isFinite(v);
+
   // ignora fora de ordem
   if (chartLastTs && tms <= chartLastTs) return;
 
   // valores
-  const temp = Number.isFinite(+j.temp_c) ? +j.temp_c : null;
-  const rain = Number.isFinite(+j.rain_rate_mmph) ? +j.rain_rate_mmph : 0;
+  const temp = (() => {
+    const v = toNum(j.temp_c);
+    return isNum(v) ? v : null; // null => gap
+  })();
+
+  const rain = (() => {
+    const v = toNum(j.rain_rate_mmph);
+    return isNum(v) ? v : null; // null => sem barra
+  })();
 
   chart.data.labels.push(
     t.toLocaleTimeString("pt-PT", { hour: "2-digit", minute: "2-digit" })
@@ -362,6 +371,9 @@ async function loadHistory() {
     );
   };
 
+  const toNum = (v) => (v == null ? null : Number(v));
+  const isNum = (v) => typeof v === "number" && Number.isFinite(v);
+
   // arrays de datas/labels
   const labelDates = rows.map(toLocalDate);
   const labels = labelDates.map((t) =>
@@ -376,18 +388,20 @@ async function loadHistory() {
   const rawTemps = rows.map((x) =>
     Number.isFinite(+x.temp_c) ? +x.temp_c : null
   );
-  const rainRate = rows.map((x) =>
-    Number.isFinite(+x.rain_rate_mmph) ? +x.rain_rate_mmph : 0
-  );
+  const rainRate = rows.map((x) => {
+    const v = toNum(x.rain_rate_mmph);
+    return isNum(v) ? v : null;
+  });
 
   // filtra lixo -> gaps
-  const temps = rawTemps.map((v) =>
-    v == null || v < -10 || v > 55 ? null : Math.max(0, Math.min(43, v))
-  );
+  const temps = rows.map((x) => {
+    const v = toNum(x.temp_c);
+    return isNum(v) ? v : null;
+  });
   const allTempsNull = temps.every((v) => v === null);
 
   // chuva 24h aprox. (10 min ≈ 1/6 h)
-  const rain24 = rainRate.reduce((a, b) => a + b / 6, 0);
+  const rain24 = rainRate.reduce((a, b) => a + (b ?? 0) / 6, 0);
   setText("#rain24", fmt(rain24, 1));
 
   const ctx = $("#histChart");
