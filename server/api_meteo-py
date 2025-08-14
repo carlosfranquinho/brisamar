@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import mysql.connector
 from datetime import datetime, timezone, timedelta
 import json
-import os
+import os, time, httpx
 import math
 from zoneinfo import ZoneInfo
 
@@ -36,6 +36,13 @@ os.makedirs(os.path.dirname(LIVE_FILE), exist_ok=True)
 TIMEZONE_OFFSET = timedelta(hours=1)  # Europe/Lisbon no verão; ajusta se precisares
 DATA_STALE_SEC = 360                  # > 6 minutos = stale
 
+
+METAR_TTL_S = 15 * 60
+CACHE_DIR   = "/var/lib/meteo"
+os.makedirs(CACHE_DIR, exist_ok=True)
+
+def cache_path(icao: str) -> str:
+    return os.path.join(CACHE_DIR, f"metar_{icao.upper()}.json")
 
 # -------------------- Helpers --------------------
 def f_to_c(f): return round((f - 32) * 5.0 / 9.0, 1)
@@ -82,6 +89,45 @@ def rh_from_temp_vpd(t_c: float, vpd_kpa: float):
 
 
 # -------------------- Endpoints --------------------
+
+@app.get("/metar-tgftp/{icao}")
+async def metar_tgftp(icao: str):
+    icao = icao.upper().strip()
+    cpath = cache_path(icao)
+
+    # cache fresco?
+    if os.path.exists(cpath) and (time.time() - os.path.getmtime(cpath) < METAR_TTL_S):
+        with open(cpath, "r", encoding="utf-8") as f:
+            cached = json.load(f)          # <— LER JSON
+        return JSONResponse(content=cached, headers={"Cache-Control": "no-store"})
+
+    url = f"https://tgftp.nws.noaa.gov/data/observations/metar/stations/{icao}.TXT"
+    try:
+        async with httpx.AsyncClient(timeout=10) as cli:
+            r = await cli.get(url)
+            r.raise_for_status()
+            lines = [ln.strip() for ln in r.text.strip().splitlines()]
+    except Exception as e:
+        if os.path.exists(cpath):
+            with open(cpath, "r", encoding="utf-8") as f:
+                cached = json.load(f)      # <— LER JSON
+            return JSONResponse(content=cached, headers={"Cache-Control": "no-store"})
+        return JSONResponse({"ok": False, "error": "fetch_failed", "detail": str(e)}, status_code=502)
+
+    obs_time = lines[0].replace("/", "-") if lines else ""
+    raw = " ".join(lines[1:]) if len(lines) > 1 else ""
+
+    out = {"ok": True, "time": obs_time, "raw": raw}
+
+    # guardar cache como JSON “limpo”
+    tmp = cpath + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(out, f, ensure_ascii=False, indent=2)  # <— ESCREVER JSON
+    os.replace(tmp, cpath)
+
+    return JSONResponse(content=out, headers={"Cache-Control": "no-store"})
+
+
 @app.get("/health")
 def health():
     return PlainTextResponse("OK")
@@ -118,38 +164,26 @@ async def ecowitt_report(request: Request):
     else:
         dewpoint_c = dewpoint_from_temp_rh(temp_c, rh_pct)
 
-    wind_kmh = mph_to_kmh(to_float(data, "windspeedmph") or 0.0)
-    gust_kmh = mph_to_kmh(to_float(data, "windgustmph") or 0.0)
+    wind_kmh     = mph_to_kmh(to_float(data, "windspeedmph") or 0.0)
+    gust_kmh     = mph_to_kmh(to_float(data, "windgustmph") or 0.0)
     wind_dir_deg = to_float(data, "winddir")
-    pressure_hpa = inHg_to_hPa(to_float(data, "baromrelin") or to_float(data, "baromabsin") or 0.0)
+    pressure_hpa = inHg_to_hPa(
+        (to_float(data, "baromrelin") if to_float(data, "baromrelin") is not None else None)
+        or (to_float(data, "baromabsin") if to_float(data, "baromabsin") is not None else None)
+        or 0.0
+    )
     rain_rate_mmph = in_to_mm(to_float(data, "rainratein") or 0.0)
-    rain_day_mm = in_to_mm(to_float(data, "dailyrainin") or 0.0)
-    solar_wm2 = to_float(data, "solarradiation")
-    uv_index = to_float(data, "uv")
+    rain_day_mm    = in_to_mm(to_float(data, "dailyrainin") or 0.0)
+    solar_wm2      = to_float(data, "solarradiation")
+    uv_index       = to_float(data, "uv")
 
     # timestamps corretos (DST automático)
     tz = ZoneInfo("Europe/Lisbon")
-    ts_utc = datetime.now(timezone.utc)
+    ts_utc   = datetime.now(timezone.utc)
     ts_local = ts_utc.astimezone(tz)
     # --------------------------------------------------------------------
 
-    # ingerir BD
-    conn = mysql.connector.connect(**DB_CONFIG)
-    cur = conn.cursor()
-    cur.execute("""
-        INSERT INTO observations
-        (station_id, ts_local, ts_utc, temp_c, rh_pct, dewpoint_c, wind_kmh, gust_kmh, wind_dir_deg,
-         pressure_hpa, rain_rate_mmph, rain_day_mm, solar_wm2, uv_index)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-    """, (
-        "meteomg", ts_local, ts_utc, temp_c, rh_pct, dewpoint_c, wind_kmh, gust_kmh, wind_dir_deg,
-        pressure_hpa, rain_rate_mmph, rain_day_mm, solar_wm2, uv_index
-    ))
-    conn.commit()
-    cur.close()
-    conn.close()
-
-    # live.json
+    # prepara payload live
     live_payload = {
         "v": 1,
         "station": "meteomg",
@@ -167,10 +201,41 @@ async def ecowitt_report(request: Request):
         "rain_rate_mmph": rain_rate_mmph,
         "rain_day_mm": rain_day_mm,
         "solar_wm2": solar_wm2,
-        "uv_index": uv_index
+        "uv_index": uv_index,
     }
-    save_live_json(live_payload)
 
+    # ingerir BD (sem impedir o live.json em caso de falha)
+    conn = None
+    cur = None
+    try:
+        conn = mysql.connector.connect(**DB_CONFIG)
+        cur = conn.cursor()
+        cur.execute("""
+            INSERT INTO observations
+            (station_id, ts_local, ts_utc, temp_c, rh_pct, dewpoint_c, wind_kmh, gust_kmh, wind_dir_deg,
+             pressure_hpa, rain_rate_mmph, rain_day_mm, solar_wm2, uv_index)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """, (
+            "meteomg", ts_local, ts_utc, temp_c, rh_pct, dewpoint_c, wind_kmh, gust_kmh, wind_dir_deg,
+            pressure_hpa, rain_rate_mmph, rain_day_mm, solar_wm2, uv_index
+        ))
+        conn.commit()
+    except Exception as e:
+        # loga erro de BD mas não falha o endpoint
+        try:
+            with open(os.path.join(LOG_DIR, "db_errors.log"), "a", encoding="utf-8") as f:
+                f.write(f"{datetime.utcnow().isoformat()}Z DB_FAIL {e}\n")
+        except Exception:
+            pass
+    finally:
+        try:
+            if cur: cur.close()
+            if conn: conn.close()
+        except Exception:
+            pass
+
+    # live.json (sempre)
+    save_live_json(live_payload)
     return PlainTextResponse("Success. Update done\n")
 
 
