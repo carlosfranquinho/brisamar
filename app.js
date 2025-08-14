@@ -5,6 +5,11 @@ const IPMA_GLOBAL_ID = 1100900;
 const IPMA_FORECAST = `https://api.ipma.pt/open-data/forecast/meteorology/cities/daily/${IPMA_GLOBAL_ID}.json`;
 const PUSH_MS = 120000;
 
+// HISTÓRICO/GRÁFICO (globais)
+let chart = null;
+let HISTORY_WINDOW_POINTS = 0;   // nº de pontos que representam as 24h iniciais
+let chartLastTs = 0;
+
 /* Helpers */
 const $ = (sel) => document.querySelector(sel);
 const fmt = (n, d = 0) => (n == null || isNaN(n) ? "—" : Number(n).toFixed(d));
@@ -187,7 +192,7 @@ async function loadForecast() {
 }
 
 function appendLivePointToChart(j) {
-    if (!chart) return;
+    if (!chart || !HISTORY_WINDOW_POINTS) return;
 
     // timestamp seguro
     const rawTs = j.ts_local || j.ts_utc;
@@ -259,48 +264,39 @@ async function loadLive() {
 }
 
 /* Histórico 24h -> gráfico */
-let chart;
-let HISTORY_WINDOW_POINTS = 0;
-let chartLastTs = 0;
-
 async function loadHistory() {
     const r = await fetch(HIST_URL, { cache: "no-store" });
     if (!r.ok) throw new Error("hist " + r.status);
-    const rows = await r.json();
+    const rows = await r.json();                           // <- rows SÓ aqui
 
-    // usa ts_local quando existir (string "YYYY-MM-DD HH:MM:SS" -> Date local)
+    // helper: ts_local "YYYY-MM-DD HH:MM:SS" -> Date local; fallback para ts_utc
     const toLocalDate = (x) => {
         if (x.ts_local) return new Date(x.ts_local.replace(" ", "T"));
-        // fallback: ts_utc ISO ou "YYYY-MM-DD HH:MM:SS" tratado como UTC
         return new Date(
             x.ts_utc.endsWith("Z") ? x.ts_utc : x.ts_utc.replace(" ", "T") + "Z"
         );
     };
 
-    // datas (Date) e labels (strings HH:MM)
+    // arrays de datas/labels
     const labelDates = rows.map(toLocalDate);
-    const labels = labelDates.map((t) =>
+    const labels = labelDates.map(t =>
         t.toLocaleTimeString("pt-PT", { hour: "2-digit", minute: "2-digit" })
     );
 
-    // guarda o “tamanho da janela” e o último timestamp real
+    // guarda janela e último timestamp real (para o appendLivePointToChart)
     HISTORY_WINDOW_POINTS = labels.length;
     chartLastTs = labelDates.at(-1)?.getTime() || 0;
 
     // datasets
-    const rawTemps = rows.map((x) =>
-        Number.isFinite(+x.temp_c) ? +x.temp_c : null
-    );
-    const rainRate = rows.map((x) =>
-        Number.isFinite(+x.rain_rate_mmph) ? +x.rain_rate_mmph : 0
-    );
+    const rawTemps = rows.map(x => Number.isFinite(+x.temp_c) ? +x.temp_c : null);
+    const rainRate = rows.map(x => Number.isFinite(+x.rain_rate_mmph) ? +x.rain_rate_mmph : 0);
 
-    // filtra lixo (NULL, < -10 ou > 55) -> gap no gráfico
-    const temps = rawTemps.map((v) =>
+    // filtra lixo -> gaps
+    const temps = rawTemps.map(v =>
         v == null || v < -10 || v > 55 ? null : Math.max(0, Math.min(43, v))
     );
 
-    // chuva 24h (amostragem ~10 min => 1/6 h por ponto)
+    // chuva 24h aprox. (10 min ≈ 1/6 h)
     const rain24 = rainRate.reduce((a, b) => a + b / 6, 0);
     setText("#rain24", fmt(rain24, 1));
 
@@ -311,7 +307,7 @@ async function loadHistory() {
     chart = new Chart(ctx, {
         type: "bar",
         data: {
-            labels, // <- já são strings "HH:MM"
+            labels,                                         // <- usa as labels já string
             datasets: [
                 {
                     type: "line",
@@ -351,7 +347,6 @@ async function loadHistory() {
         },
     });
 }
-
 
 /* Boot */
 async function boot() {
