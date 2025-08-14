@@ -9,6 +9,30 @@ const ACCENT = (CSSVARS.getPropertyValue("--accent") || "#3b82f6").trim();
 const ACCENT2 = (CSSVARS.getPropertyValue("--accent-2") || "#94a3b8").trim();
 const METAR_URL = "https://meteomg-tunel.franquinho.info/metar-tgftp/LPMR";
 
+/* Icons */
+const ICON_PATHS = {
+  "clear-day":            "icons/clear-day.svg",
+  "clear-night":          "icons/clear-night.svg",
+  "partly-cloudy-day":    "icons/partly-cloudy-day.svg",
+  "partly-cloudy-night":  "icons/partly-cloudy-night.svg",
+  "cloudy":               "icons/cloudy.svg",
+  "overcast":             "icons/overcast.svg",
+  "drizzle":              "icons/drizzle.svg",
+  "rain":                 "icons/rain.svg",
+  "heavy-rain":           "icons/heavy-rain.svg",
+  "thunder":              "icons/thunder.svg",
+  "snow":                 "icons/snow.svg",
+  "sleet":                "icons/sleet.svg",
+  "freezing-rain":        "icons/freezing-rain.svg",
+  "fog":                  "icons/fog.svg",
+  "wind":                 "icons/wind.svg",
+  "unknown":              "icons/unknown.svg"
+};
+function iconUrl(name) {
+  return ICON_PATHS[name] || ICON_PATHS["unknown"];
+}
+
+
 // HISTÓRICO/GRÁFICO (globais)
 let chart = null;
 let HISTORY_WINDOW_POINTS = 0; // nº de pontos que representam as 24h iniciais
@@ -75,16 +99,22 @@ async function loadMetarTGFTP() {
     const r = await fetch(METAR_URL, { cache: "no-store" });
     const j = await r.json();
     if (!j.ok) return;
+
     const sunrise = $("#sunrise")?.textContent || "06:00";
-    const sunset = $("#sunset")?.textContent || "21:00";
+    const sunset  = $("#sunset")?.textContent  || "21:00";
     const day = isDay(Date.now(), sunrise, sunset);
     const name = iconNameFromMetarRaw(j.raw, day);
-    const use = document.querySelector("#bm-now-ico use");
-    if (use) use.setAttribute("href", `#bm-icon-${name}`);
+
+    const img = document.getElementById("bm-now-ico");
+    if (img) {
+      img.src = iconUrl(name);
+      img.alt = name.replace(/-/g, " ");
+    }
   } catch (e) {
     console.warn("METAR TGFTP falhou:", e);
   }
 }
+
 
 let countdownTimer = null,
   nextRefreshAt = 0;
@@ -151,30 +181,20 @@ function iconNameFromIpma(code, isDaytime) {
 function renderNowIcon(ipmaCode, sunriseHHMM, sunsetHHMM) {
   const day = isDay(Date.now(), sunriseHHMM, sunsetHHMM);
   const name = iconNameFromIpma(ipmaCode, day);
-  const svg = document.getElementById("bm-now-ico");
-  const use = svg?.querySelector("use");
+  const img = document.getElementById("bm-now-ico");
+  if (!img) return;
 
-  if (use) {
-    const ref = `#bm-icon-${name}`;
-    use.setAttribute("href", ref);
-    use.setAttribute("xlink:href", ref); // fallback para Safari/antigos
-  }
+  img.src = iconUrl(name);
+  img.alt = name.replace(/-/g, " ");
 
-  if (!svg) return;
-  svg.classList.remove("sunny", "alert", "neutral");
-  if (
-    [
-      "clear-day",
-      "clear-night",
-      "partly-cloudy-day",
-      "partly-cloudy-night",
-    ].includes(name)
-  ) {
-    svg.classList.add("sunny");
-  } else if (["thunder", "heavy-rain"].includes(name)) {
-    svg.classList.add("alert");
+  // classes de estado (mantive a tua lógica)
+  img.classList.remove("sunny", "alert", "neutral");
+  if (["clear-day","clear-night","partly-cloudy-day","partly-cloudy-night"].includes(name)) {
+    img.classList.add("sunny");
+  } else if (["thunder","heavy-rain"].includes(name)) {
+    img.classList.add("alert");
   } else {
-    svg.classList.add("neutral");
+    img.classList.add("neutral");
   }
 }
 
@@ -205,26 +225,22 @@ async function loadForecast() {
     days.forEach((d, i) => {
       const day = new Date(d.forecastDate);
       const label = day.toLocaleDateString("pt-PT", { weekday: "short" });
-
-      // ícone (usa sempre versão “day” para cartões)
       const iconName = iconNameFromIpma(d.idWeatherType, /*isDaytime*/ true);
 
       const li = document.createElement("li");
       li.innerHTML = `
         <div class="d">${label}</div>
         <div class="ic">
-          <svg class="bm-ico bm-ico--sm" viewBox="0 0 24 24" aria-hidden="true">
-            <use href="#bm-icon-${iconName}"></use>
-          </svg>
+          <img class="bm-ico bm-ico--sm" src="${iconUrl(iconName)}" alt="${iconName.replace(/-/g,' ')}" width="48" height="48">
         </div>
         <div class="t">${Math.round(d.tMax)}° | ${Math.round(d.tMin)}°</div>
       `;
       ul.appendChild(li);
 
-      // No 1.º item, aproveita e atualiza o ícone grande do topo
+      // Se quiseres que o ícone grande reflita a previsão de hoje (como já tinhas):
       if (i === 0) {
         const sunrise = $("#sunrise")?.textContent || "06:00";
-        const sunset = $("#sunset")?.textContent || "21:00";
+        const sunset  = $("#sunset")?.textContent  || "21:00";
         renderNowIcon(d.idWeatherType, sunrise, sunset);
       }
     });
@@ -232,6 +248,7 @@ async function loadForecast() {
     console.warn("IPMA falhou:", e);
   }
 }
+
 
 function appendLivePointToChart(j) {
   if (!chart || !HISTORY_WINDOW_POINTS) return;

@@ -24,11 +24,8 @@
         <section class="hero-top">
             <div class="now-left">
                 <div class="now-icon">
-                    <svg class="bm-ico" id="bm-now-ico" viewBox="0 0 24 24" role="img" aria-label="Estado atual">
-                        <use href="#bm-icon-partly-cloudy-day"></use>
-                    </svg>
+                    <img id="bm-now-ico" class="bm-ico" alt="Estado atual" width="96" height="96">
                 </div>
-
 
                 <div class="now-temp">
                     <span id="temp">--</span><span class="deg">°C</span>
@@ -76,7 +73,6 @@
             <aside class="forecast">
                 <h2 class="forecast-title">Previsão</h2>
                 <ul id="forecast" class="days">
-                    <!-- 3 itens via JS -->
                 </ul>
             </aside>
 
@@ -99,13 +95,6 @@
         </footer>
 
     </main>
-  <script>
-    fetch('sprites.svg')
-      .then(res => res.text())
-      .then(svg => {
-        document.getElementById('svg-sprites').innerHTML = svg;
-      });
-  </script>
 </body>
 
 </html>
