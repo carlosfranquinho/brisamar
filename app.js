@@ -58,6 +58,9 @@ function startCountdown(ms) {
   }, 250);
 }
 
+let HISTORY_WINDOW_POINTS = 0;  // nº de pontos que representam 24h
+let chartLastTs = 0;            // timestamp do último ponto no gráfico
+
 /* Cabeçalho: data atual */
 (function setNow() {
   const now = new Date();
@@ -186,41 +189,37 @@ async function loadForecast() {
   }
 }
 
-function appendLivePointToChart(j) {
+function appendLivePointToChart(j){
   if (!chart) return;
 
   // timestamp seguro
-  const ts = j.ts_local || j.ts_utc;
-  if (!ts) return; // sem timestamp, não anexa
-  const isSqlFmt = ts.includes(" ") && !ts.endsWith("Z");
-  const t = new Date(isSqlFmt ? ts.replace(" ", "T") : ts);
+  const rawTs = j.ts_local || j.ts_utc;
+  if (!rawTs) return;
+  const t = new Date(rawTs.includes(' ') && !rawTs.endsWith('Z') ? rawTs.replace(' ', 'T') : rawTs);
+  const tms = t.getTime();
 
-  // ignora pontos fora de ordem
-  const lastLabel = chart.data.labels.at(-1);
-  if (lastLabel && t <= new Date(`1970-01-01T${lastLabel}`)) {
-    // lastLabel está em HH:MM; este check é best-effort — se quiseres rigor, guarda Date reais em labels
-    return;
-  }
+  // ignora fora de ordem
+  if (chartLastTs && tms <= chartLastTs) return;
 
   // valores
   const temp = Number.isFinite(+j.temp_c) ? +j.temp_c : null;
   const rain = Number.isFinite(+j.rain_rate_mmph) ? +j.rain_rate_mmph : 0;
 
-  chart.data.labels.push(
-    t.toLocaleTimeString("pt-PT", { hour: "2-digit", minute: "2-digit" })
-  );
+  chart.data.labels.push(t.toLocaleTimeString("pt-PT",{hour:"2-digit",minute:"2-digit"}));
   chart.data.datasets[0].data.push(temp);
   chart.data.datasets[1].data.push(rain);
 
-  // manter janela limitada
-  const maxPoints = 200;
-  while (chart.data.labels.length > maxPoints) {
+  chartLastTs = tms;
+
+  // mantém a janela do tamanho original (≈24h)
+  const maxPoints = HISTORY_WINDOW_POINTS || chart.data.labels.length;
+  while (chart.data.labels.length > maxPoints){
     chart.data.labels.shift();
     chart.data.datasets[0].data.shift();
     chart.data.datasets[1].data.shift();
   }
 
-  chart.update("none");
+  chart.update('none');
 }
 
 /* Live */
@@ -265,6 +264,14 @@ async function loadLive() {
 /* Histórico 24h -> gráfico */
 let chart;
 async function loadHistory() {
+
+const labelDates = rows.map(toLocalDate);
+const labels     = labelDates.map(t => t.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'}));
+
+HISTORY_WINDOW_POINTS = labels.length;
+//chartLastTs = labelDates.at(-1)?.getTime() || 0;
+chartLastTs = labelDates.at(-1)?.getTime() || 0;
+
   const r = await fetch(HIST_URL, { cache: "no-store" });
   if (!r.ok) throw new Error("hist " + r.status);
   const rows = await r.json();
@@ -278,7 +285,8 @@ async function loadHistory() {
     );
   };
 
-  const labels = rows.map(toLocalDate);
+ // const labels = rows.map(toLocalDate);
+
   const rawTemps = rows.map((x) =>
     Number.isFinite(+x.temp_c) ? +x.temp_c : null
   );

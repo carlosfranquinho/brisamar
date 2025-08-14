@@ -1,353 +1,435 @@
 :root {
-  --ink: #111;
-  --muted: #6b7280;
-  --paper: #fafbfd;
-  --accent: #3b82f6; /* azul suave */
-  --accent-2: #94a3b8; /* cinza/azulado */
-  --gap: 18px;
+    --ink: #111;
+    --muted: #6b7280;
+    --paper: #fafbfd;
+    --accent: #3b82f6;
+    /* azul suave */
+    --accent-2: #94a3b8;
+    /* cinza/azulado */
+    --gap: 18px;
 }
 
 * {
-  box-sizing: border-box;
+    box-sizing: border-box;
 }
+
 html,
 body {
-  height: 100%;
+    height: 100%;
 }
+
 body {
-  margin: 0;
-  font: 16px/1.35 ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto,
-    Helvetica, Arial;
-  background: var(--paper);
-  color: var(--ink);
+    margin: 0;
+    font: 16px/1.35 ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto,
+        Helvetica, Arial;
+    background: var(--paper);
+    color: var(--ink);
 }
 
 /* layout geral */
 .shell {
-  max-width: 1200px;
-  min-height: 100dvh;
-  margin-inline: auto;
-  display: grid;
-  grid-template-rows: auto auto 1fr auto;
-  gap: var(--gap);
-  padding: clamp(12px, 2vw, 28px);
+    max-width: 1200px;
+    min-height: 100dvh;
+    margin-inline: auto;
+    display: grid;
+    grid-template-rows: auto auto 1fr auto;
+    gap: var(--gap);
+    padding: clamp(12px, 2vw, 28px);
 }
 
 /* título centrado */
 .hero-head {
-  text-align: center;
-  margin-top: 0.4rem;
+    text-align: center;
+    margin-top: 0.4rem;
 }
+
 .hero-head h1 {
-  margin: 0;
-  font-weight: 900;
-  letter-spacing: 0.3px;
+    margin: 0;
+    font-weight: 900;
+    letter-spacing: 0.3px;
 }
+
 #nowDate {
-  margin: 0.25rem 0 0;
-  color: var(--muted);
+    margin: 0.25rem 0 0;
+    color: var(--muted);
 }
 
 /* topo: 2/3 do ecrã (em telas altas) */
 .hero-top {
-  display: grid;
-  grid-template-columns: minmax(260px, 520px) 1fr;
-  align-items: center;
-  gap: clamp(12px, 3vw, 40px);
-  min-height: 40vh;
+    display: grid;
+    grid-template-columns: minmax(260px, 520px) 1fr;
+    align-items: center;
+    gap: clamp(12px, 3vw, 40px);
+    min-height: 40vh;
 }
 
 /* ícone + temperatura */
 .now-left {
-  display: flex;
-  align-items: center;
-  gap: clamp(12px, 2vw, 24px);
-}
-.now-icon {
-  width: clamp(72px, 9vw, 120px);
-  height: clamp(72px, 9vw, 120px);
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  color: #fff;
-  background: radial-gradient(120% 120% at 30% 30%, #fbbf24, #f59e0b);
-  box-shadow: 0 0 0 6px #fff inset, 0 0 0 2px #e5e7eb inset, 0 4px 16px #0001;
+    display: flex;
+    align-items: center;
+    gap: clamp(12px, 2vw, 24px);
 }
 
-.now-icon svg{
-  width: 68%; height: 68%;
-  color: rgba(0,0,0,.45);    /* traço mais escuro = legível no amarelo */
-  stroke-width: 2.25;        /* >2 sem perder leveza */
-  filter: drop-shadow(0 1px 0 rgba(255,255,255,.35)); /* subtil realce */
+.now-icon {
+    width: clamp(72px, 9vw, 120px);
+    height: clamp(72px, 9vw, 120px);
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    color: #fff;
+    background: radial-gradient(120% 120% at 30% 30%, #fbbf24, #f59e0b);
+    box-shadow: 0 0 0 6px #fff inset, 0 0 0 2px #e5e7eb inset, 0 4px 16px #0001;
+}
+
+.now-icon svg {
+    width: 68%;
+    height: 68%;
+    color: rgba(0, 0, 0, .45);
+    /* traço mais escuro = legível no amarelo */
+    stroke-width: 2.25;
+    /* >2 sem perder leveza */
+    filter: drop-shadow(0 1px 0 rgba(255, 255, 255, .35));
+    /* subtil realce */
 }
 
 
 .now-temp {
-  line-height: 1;
+    line-height: 1;
 }
+
 .now-temp .deg {
-  font-size: 0.6em;
-  margin-left: 6px;
-  color: var(--accent);
-  vertical-align: text-top;
-  transform: translateY(-0.12em);
+    font-size: 0.6em;
+    margin-left: 6px;
+    color: var(--accent);
+    vertical-align: text-top;
+    transform: translateY(-0.12em);
 }
+
 .now-temp #temp {
-  font-size: clamp(54px, 10vw, 120px);
-  font-weight: 900;
-  letter-spacing: -2px;
+    font-size: clamp(54px, 10vw, 120px);
+    font-weight: 900;
+    letter-spacing: -2px;
 }
+
 .feels {
-  color: var(--muted);
-  margin-top: 4px;
+    color: var(--muted);
+    margin-top: 4px;
 }
 
 /* grelha de métricas (sem caixas) */
 .now-metrics {
-  display: grid;
-  gap: 10px 18px;
-  grid-template-columns: repeat(2, minmax(280px, 1fr));
+    display: grid;
+    gap: 10px 18px;
+    grid-template-columns: repeat(2, minmax(280px, 1fr));
 }
+
 .now-metrics .m {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 6px 0;
-  border-bottom: 1px dashed #0002;
-  align-items: baseline;
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 6px 0;
+    border-bottom: 1px dashed #0002;
+    align-items: baseline;
 }
+
 .now-metrics .m:last-child {
-  border-bottom: 0;
+    border-bottom: 0;
 }
+
 .now-metrics .m strong {
-  text-align: right;
-  flex: 1;
+    text-align: right;
+    flex: 1;
 }
+
 .now-metrics span {
-  color: var(--muted);
-  min-width: 120px;
+    color: var(--muted);
+    min-width: 120px;
 }
+
 .now-metrics strong {
-  font-variant-numeric: tabular-nums;
+    font-variant-numeric: tabular-nums;
 }
 
 /* parte inferior: 1/3 */
 .bottom {
-  display: grid;
-  grid-template-columns: 360px 1fr;
-  gap: var(--gap);
-  min-height: 0;
+    display: grid;
+    grid-template-columns: 360px 1fr;
+    gap: var(--gap);
+    min-height: 0;
 }
 
 /* previsão (3 cartões, contorno suave permitido) */
 /* título da previsão */
 .forecast-title {
-  margin: 0 0 8px 0;
-  font-weight: 800;
-  color: var(--muted);
+    margin: 0 0 8px 0;
+    font-weight: 800;
+    color: var(--muted);
 }
 
 .days {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
 }
+
 .days li {
-  border: 1.5px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 10px 12px;
-  background: #fff;
-  box-shadow: 0 1px 4px #0000000f;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 10px 12px;
+    background: #fff;
+    box-shadow: 0 1px 4px #0000000f;
 }
+
 .days .d {
-  font-weight: 800;
-  margin-bottom: 4px;
+    font-weight: 800;
+    margin-bottom: 4px;
 }
+
 .days .ic {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin: 2px 0 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 2px 0 6px;
 }
+
 .days .t {
-  color: var(--muted);
-  font-size: 0.95rem;
+    color: var(--muted);
+    font-size: 0.95rem;
 }
 
 /* gráfico 24h */
 .chart {
-  display: grid;
-  grid-template-rows: auto 1fr auto;
-  gap: 8px;
-  min-height: 0;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    gap: 8px;
+    min-height: 0;
 }
+
 .chart-title {
-  font-weight: 800;
+    font-weight: 800;
 }
+
 .chart-canvas {
-  min-height: 0;
-  height: clamp(
-    220px,
-    28vh,
-    360px
-  ); /* ajusta-se ao ecrã, sem rebentar o layout */
+    min-height: 0;
+    height: clamp(220px,
+            28vh,
+            360px);
+    /* ajusta-se ao ecrã, sem rebentar o layout */
 }
+
 .chart-canvas canvas {
-  width: 100%;
-  height: 100% !important;
-  display: block;
+    width: 100%;
+    height: 100% !important;
+    display: block;
 }
+
 .chart-legend {
-  display: flex;
-  gap: 16px;
-  align-items: center;
-  color: var(--muted);
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    color: var(--muted);
 }
+
 .dot {
-  display: inline-block;
-  width: 10px;
-  height: 10px;
-  border: 1px solid #0002;
-  border-radius: 50%;
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border: 1px solid #0002;
+    border-radius: 50%;
 }
+
 .dot.t {
-  background: var(--accent);
+    background: var(--accent);
 }
+
 .dot.r {
-  background: var(--accent-2);
+    background: var(--accent-2);
 }
 
 /* rodapé */
 .foot {
-  display: flex;
-  justify-content: flex-end;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 10px;
 }
+
+.foot .sep {
+    color: #9aa3af;
+}
+
+#nextRefresh {
+    color: var(--muted);
+}
+
+#nextRefresh strong {
+    color: inherit;
+    font-weight: 700;
+}
+
 #staleFlag.ok {
-  color: #0a7a0a;
+    color: #0a7a0a;
 }
+
 #staleFlag.stale {
-  color: #b00020;
-  font-weight: 700;
+    color: #b00020;
+    font-weight: 700;
 }
 
 /* ícones Brisa Marinha */
 .bm-ico {
-  width: 72px;
-  height: 72px;
-  color: var(--icon, #5b87c8); /* azul suave */
+    width: 72px;
+    height: 72px;
+    color: var(--icon, #5b87c8);
+    /* azul suave */
 }
+
 .bm-ico.sunny {
-  color: #f0a94a;
-} /* laranja suave p/ sol */
+    color: #f0a94a;
+}
+
+/* laranja suave p/ sol */
 .bm-ico.alert {
-  color: #d36d6d;
-} /* p/ trovoada/avisos */
+    color: #d36d6d;
+}
+
+/* p/ trovoada/avisos */
 .bm-ico.neutral {
-  color: #7a8ca8;
-} /* nublado/nevoeiro */
+    color: #7a8ca8;
+}
+
+/* nublado/nevoeiro */
 
 /* Ícone grande (topo) */
-#bm-now-ico {
-}
+#bm-now-ico {}
 
 /* Ícones dos cartões de previsão */
 .bm-ico--sm {
-  width: 24px;
-  height: 24px;
+    width: 24px;
+    height: 24px;
 }
 
 /* responsivo */
 @media (max-width: 980px) {
-  .hero-top {
-    grid-template-columns: 1fr;
-  }
-  .bottom {
-    grid-template-columns: 1fr;
-  }
-  .days {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .days li {
-    flex: 1;
-  }
-  .hero-head {
-    margin-top: 0;
-  }
+    .hero-top {
+  grid-template-columns: minmax(320px, 680px) 1fr; 
+    }
+
+    .bottom {
+        grid-template-columns: 1fr;
+    }
+
+    .days {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .days li {
+        flex: 1;
+    }
+
+    .hero-head {
+        margin-top: 0;
+    }
 }
 
 @media (max-height: 780px) {
-  .hero-top {
-    min-height: 36vh;
-  }
-  .chart-canvas {
-    height: clamp(200px, 24vh, 320px);
-  }
-  .shell {
-    padding-block: clamp(8px, 1.5vh, 18px);
-  }
+    .hero-top {
+        min-height: 36vh;
+    }
+
+    .chart-canvas {
+        height: clamp(200px, 24vh, 320px);
+    }
+
+    .shell {
+        padding-block: clamp(8px, 1.5vh, 18px);
+    }
 }
 
 @media (max-width: 520px) {
-  .days {
-    grid-template-columns: 1fr;
-  }
+    .days {
+        grid-template-columns: 1fr;
+    }
 }
 
 /* foco visível mas discreto para links/controles, caso existam */
 :focus-visible {
-  outline: 3px solid #3b82f666;
-  outline-offset: 3px;
+    outline: 3px solid #3b82f666;
+    outline-offset: 3px;
 }
 
 /* respeitar preferência de utilizadores que evitam animações */
 @media (prefers-reduced-motion: reduce) {
-  * {
-    animation: none !important;
-    transition: none !important;
-  }
+    * {
+        animation: none !important;
+        transition: none !important;
+    }
 }
 
 /* 1) Grau (ºC): alinhamento seguro em todos os browsers */
-.now-temp .deg{
-  font-size: 0.72em;         /* 0.6em -> 0.72em */
-  margin-left: 6px;
-  color: var(--accent);
-  vertical-align: text-top;
-  transform: translateY(-0.18em);
-  display: inline-block;     /* garante o transform em todos os browsers */
-  line-height: 1;
+.now-temp .deg {
+    font-size: 1em;
+    margin-left: 6px;
+    color: var(--accent);
+    vertical-align: text-top;
+    transform: translateY(-0.18em);
+    display: inline-block;
+    line-height: 1;
+    white-space: nowrap;
 }
 
 
 /* 2) Cartões da previsão: evitar que as temperaturas quebrem linha */
-.days .t{
-  white-space: nowrap;
-  font-variant-numeric: tabular-nums;  /* números com largura igual */
+.days .t {
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+    /* números com largura igual */
 }
 
 /* 3) Garantir que os 3 cartões ficam com a MESMA altura mesmo com textos diferentes */
-.days{ align-items: stretch; }
-.days li{ display: grid; grid-auto-rows: min-content; }
+.days {
+    align-items: stretch;
+}
+
+.days li {
+    display: grid;
+    grid-auto-rows: min-content;
+}
 
 /* 4) Grelha de métricas: títulos não “saltam” em ecrãs muito largos */
-@media (min-width: 1280px){
-  .now-metrics{ grid-template-columns: repeat(3, minmax(260px, 1fr)); }
+@media (min-width: 1280px) {
+    .now-metrics {
+        grid-template-columns: repeat(2, minmax(280px, 1fr));
+    }
 }
 
 /* 5) Canvas do gráfico: evita reflows desnecessários e dá robustez ao resize */
-.chart-canvas{ contain: content; }
+.chart-canvas {
+    contain: content;
+}
 
 /* 6) Ícone grande: se for meramente decorativo, podes usar isto */
-.now-icon[aria-hidden="true"] svg{ pointer-events: none; }
-
-.pulse{
-  animation: pulseColor .35s ease-out;
+.now-icon[aria-hidden="true"] svg {
+    pointer-events: none;
 }
-@keyframes pulseColor{
-  0%{ color: var(--ink); }
-  20%{ color: var(--accent); }
-  100%{ color: var(--ink); }
+
+.pulse {
+    animation: pulseColor .35s ease-out;
+}
+
+@keyframes pulseColor {
+    0% {
+        color: var(--ink);
+    }
+
+    20% {
+        color: var(--accent);
+    }
+
+    100% {
+        color: var(--ink);
+    }
 }

@@ -1,0 +1,226 @@
+from fastapi import FastAPI, Request, Query
+from fastapi.responses import PlainTextResponse, JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
+import mysql.connector
+from datetime import datetime, timezone, timedelta
+import json
+import os
+import math
+from zoneinfo import ZoneInfo
+
+app = FastAPI()
+
+# CORS – restringe ao teu site
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["https://brisamar.franquinho.info"],
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["*"],
+)
+
+# -------------------- Config --------------------
+DB_CONFIG = {
+    "host": "localhost",
+    "user": "meteo_user",
+    "password": "cmrf.m3t30",
+    "database": "meteo"
+}
+
+LOG_DIR = "/home/carlos/meteo_logs"
+os.makedirs(LOG_DIR, exist_ok=True)
+
+LIVE_FILE = "/var/lib/meteo/live.json"   # <- ou /home/carlos/meteo-runtime/live.json
+os.makedirs(os.path.dirname(LIVE_FILE), exist_ok=True)
+
+TIMEZONE_OFFSET = timedelta(hours=1)  # Europe/Lisbon no verão; ajusta se precisares
+DATA_STALE_SEC = 360                  # > 6 minutos = stale
+
+
+# -------------------- Helpers --------------------
+def f_to_c(f): return round((f - 32) * 5.0 / 9.0, 1)
+def mph_to_kmh(mph): return round(mph * 1.60934, 1)
+def in_to_mm(inches): return round(inches * 25.4, 2)
+def inHg_to_hPa(inhg): return round(inhg * 33.8639, 1)
+
+def save_live_json(data: dict):
+    tmp_path = LIVE_FILE + ".tmp"
+    with open(tmp_path, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+    os.replace(tmp_path, LIVE_FILE)
+
+def to_float(d: dict, key: str):
+    try:
+        v = d.get(key)
+        if v is None:
+            return None
+        s = str(v).strip()
+        if s in ("", "NA", "nan", "NaN"):
+            return None
+        return float(s)
+    except Exception:
+        return None
+
+def dewpoint_from_temp_rh(t_c: float, rh_pct: float):
+    # Magnus-Tetens (válida ~0–60 °C)
+    if t_c is None or rh_pct is None or rh_pct <= 0:
+        return None
+    a, b = 17.62, 243.12
+    gamma = (a * t_c) / (b + t_c) + math.log(rh_pct / 100.0)
+    return round((b * gamma) / (a - gamma), 1)
+
+def rh_from_temp_vpd(t_c: float, vpd_kpa: float):
+    # Se a humidade faltar mas houver VPD, estima RH
+    if t_c is None or vpd_kpa is None:
+        return None
+    es = 0.6108 * math.exp(17.27 * t_c / (t_c + 237.3))  # kPa
+    avp = es - vpd_kpa
+    if avp <= 0:
+        return 0.0
+    rh = (avp / es) * 100.0
+    return max(0.0, min(100.0, rh))
+
+
+# -------------------- Endpoints --------------------
+@app.get("/health")
+def health():
+    return PlainTextResponse("OK")
+
+@app.api_route("/api", methods=["GET", "POST"])
+@app.api_route("/api/", methods=["GET", "POST"])
+async def ecowitt_report(request: Request):
+    # tenta POST form-data; senão usa query string
+    data = {}
+    try:
+        form = await request.form()
+        data = dict(form)
+    except Exception:
+        pass
+    if not data:
+        data = dict(request.query_params)
+
+    # debug dump do payload bruto
+    ts_filename = datetime.utcnow().strftime("%Y%m%d_%H%M%S") + ".json"
+    with open(os.path.join(LOG_DIR, ts_filename), "w") as f:
+        json.dump(data, f, indent=2)
+
+    # ---------------- conversões (sem defaults perigosos) ----------------
+    tempf = to_float(data, "tempf")
+    temp_c = f_to_c(tempf) if tempf is not None else None
+
+    rh_pct = to_float(data, "humidity")
+    if rh_pct is None:
+        rh_pct = rh_from_temp_vpd(temp_c, to_float(data, "vpd"))
+
+    dewptf = to_float(data, "dewptf")
+    if dewptf is not None:
+        dewpoint_c = f_to_c(dewptf)
+    else:
+        dewpoint_c = dewpoint_from_temp_rh(temp_c, rh_pct)
+
+    wind_kmh = mph_to_kmh(to_float(data, "windspeedmph") or 0.0)
+    gust_kmh = mph_to_kmh(to_float(data, "windgustmph") or 0.0)
+    wind_dir_deg = to_float(data, "winddir")
+    pressure_hpa = inHg_to_hPa(to_float(data, "baromrelin") or to_float(data, "baromabsin") or 0.0)
+    rain_rate_mmph = in_to_mm(to_float(data, "rainratein") or 0.0)
+    rain_day_mm = in_to_mm(to_float(data, "dailyrainin") or 0.0)
+    solar_wm2 = to_float(data, "solarradiation")
+    uv_index = to_float(data, "uv")
+
+    # timestamps corretos (DST automático)
+    tz = ZoneInfo("Europe/Lisbon")
+    ts_utc = datetime.now(timezone.utc)
+    ts_local = ts_utc.astimezone(tz)
+    # --------------------------------------------------------------------
+
+    # ingerir BD
+    conn = mysql.connector.connect(**DB_CONFIG)
+    cur = conn.cursor()
+    cur.execute("""
+        INSERT INTO observations
+        (station_id, ts_local, ts_utc, temp_c, rh_pct, dewpoint_c, wind_kmh, gust_kmh, wind_dir_deg,
+         pressure_hpa, rain_rate_mmph, rain_day_mm, solar_wm2, uv_index)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+    """, (
+        "meteomg", ts_local, ts_utc, temp_c, rh_pct, dewpoint_c, wind_kmh, gust_kmh, wind_dir_deg,
+        pressure_hpa, rain_rate_mmph, rain_day_mm, solar_wm2, uv_index
+    ))
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    # live.json
+    live_payload = {
+        "v": 1,
+        "station": "meteomg",
+        "ts_utc": ts_utc.isoformat().replace("+00:00", "Z"),
+        "ts_local": ts_local.isoformat(),
+        "age_s": 0,
+        "stale": False,
+        "temp_c": temp_c,
+        "rh_pct": rh_pct,
+        "dewpoint_c": dewpoint_c,
+        "wind_kmh": wind_kmh,
+        "gust_kmh": gust_kmh,
+        "wind_dir_deg": wind_dir_deg,
+        "pressure_hpa": pressure_hpa,
+        "rain_rate_mmph": rain_rate_mmph,
+        "rain_day_mm": rain_day_mm,
+        "solar_wm2": solar_wm2,
+        "uv_index": uv_index
+    }
+    save_live_json(live_payload)
+
+    return PlainTextResponse("Success. Update done\n")
+
+
+@app.get("/latest")
+async def latest_observation():
+    conn = mysql.connector.connect(**DB_CONFIG)
+    cur = conn.cursor(dictionary=True)
+    cur.execute("""
+        SELECT * FROM observations
+        ORDER BY ts_local DESC
+        LIMIT 1
+    """)
+    row = cur.fetchone()
+    cur.close()
+    conn.close()
+    if row:
+        return JSONResponse(content=row, headers={"Cache-Control": "no-store"})
+    else:
+        return JSONResponse(content={"error": "No data found"}, status_code=404)
+
+
+@app.get("/live")
+async def get_live():
+    if not os.path.exists(LIVE_FILE):
+        return JSONResponse(
+            status_code=503,
+            content={"v": 1, "error": "no_live_data", "message": "Live JSON not ready"}
+        )
+
+    with open(LIVE_FILE, "r", encoding="utf-8") as f:
+        data = json.load(f)
+
+    ts_utc = datetime.fromisoformat(data["ts_utc"].replace("Z", "+00:00"))
+    age_s = (datetime.now(timezone.utc) - ts_utc).total_seconds()
+    data["age_s"] = round(age_s, 1)
+    data["stale"] = age_s > DATA_STALE_SEC
+
+    return JSONResponse(content=data, headers={"Cache-Control": "no-store"})
+
+@app.get("/history")
+def history(hours: int = Query(24, ge=1, le=168)):
+    conn = mysql.connector.connect(**DB_CONFIG)
+    cur = conn.cursor(dictionary=True)
+    cur.execute("""
+        SELECT ts_local, ts_utc, temp_c, rain_day_mm, rain_rate_mmph
+        FROM observations
+        WHERE ts_utc >= (UTC_TIMESTAMP() - INTERVAL %s HOUR)
+        ORDER BY ts_local ASC
+    """, (hours,))
+    rows = cur.fetchall()
+    cur.close()
+    conn.close()
+    return rows
