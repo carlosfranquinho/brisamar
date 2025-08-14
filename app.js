@@ -281,8 +281,10 @@ function appendLivePointToChart(j) {
     t.toLocaleTimeString("pt-PT", { hour: "2-digit", minute: "2-digit" })
   );
   chart.data.datasets[0].data.push(temp);
+  if (temp !== null) {
+    chart.data.datasets[0].hidden = false; // volta a mostrar se vier valor
+  }
   chart.data.datasets[1].data.push(rain);
-
   chartLastTs = tms;
 
   // mantém a janela do tamanho original (≈24h)
