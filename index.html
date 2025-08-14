@@ -27,6 +27,8 @@
                 </div>
 
                 <div class="now-temp">
+                    <div class="now-ext now-ext--max" id="tmax">—°</div>
+                    <div class="now-ext now-ext--min" id="tmin">—°</div>
                     <span id="temp">--</span><span class="deg">°C</span>
                     <div class="feels">sensação <span id="apparent">--</span>°</div>
                 </div>
@@ -45,7 +47,9 @@
                 </div>
                 <div class="m">
                     <span>Rajada / Dir</span>
-                    <strong><span id="gust">--</span> · <span id="winddir">—</span></strong>
+                    <strong>
+                        <span id="gust">—</span><span class="u"> km/h</span> · <span id="winddir">—</span>
+                    </strong>
                 </div>
 
                 <div class="m"><span>Humidade</span><strong id="rh">--</strong></div>
@@ -57,6 +61,11 @@
                     <span>Pressão</span><strong><span id="press">--</span> hPa</strong>
                 </div>
                 <div class="m"><span>UV</span><strong id="uv">--</strong></div>
+
+                <div class="m">
+                    <span>Radiação</span>
+                    <strong><span id="solar">—</span><span class="u"> W/m²</span></strong>
+                </div>
 
                 <div class="m"><span>Chuva (hoje)</span><strong><span id="rainToday">—</span> mm</strong></div>
 

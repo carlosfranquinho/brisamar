@@ -8,6 +8,7 @@ import os
 import time
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
+from decimal import Decimal
 
 import mysql.connector
 from mysql.connector import pooling
@@ -65,7 +66,7 @@ def inHg_to_hPa(inhg): return round(inhg * 33.8639, 1)
 def save_live_json(data: dict):
     tmp_path = LIVE_FILE + ".tmp"
     with open(tmp_path, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
+        json.dump(data, f, ensure_ascii=False, indent=2, default=_json_default)
     os.replace(tmp_path, LIVE_FILE)
 
 def to_float(d: dict, key: str):
@@ -98,6 +99,35 @@ def rh_from_temp_vpd(t_c: float, vpd_kpa: float):
         return 0.0
     rh = (avp / es) * 100.0
     return max(0.0, min(100.0, rh))
+
+def _json_default(o):
+    if isinstance(o, Decimal):
+        return float(o)
+    if isinstance(o, datetime):
+        return o.isoformat()
+    return str(o)
+
+def apparent_temperature_c(t_c: float | None, rh_pct: float | None, wind_kmh: float | None) -> float | None:
+    """
+    "Feels like" em °C.
+    - Wind Chill (Canadá) quando T <= 10°C e vento >= 4.8 km/h
+    - Caso contrário, Apparent Temperature (BoM/Austrália)
+    """
+    if t_c is None or rh_pct is None:
+        return None
+    try:
+        v_kmh = float(wind_kmh or 0.0)
+    except Exception:
+        v_kmh = 0.0
+
+    if t_c <= 10.0 and v_kmh >= 4.8:
+        wc = 13.12 + 0.6215 * t_c - 11.37 * (v_kmh ** 0.16) + 0.3965 * t_c * (v_kmh ** 0.16)
+        return round(wc, 1)
+
+    wind_ms = v_kmh / 3.6
+    e = (rh_pct / 100.0) * 6.105 * math.exp(17.27 * t_c / (237.7 + t_c))
+    at = t_c + 0.33 * e - 0.70 * wind_ms - 4.00
+    return round(at, 1)
 
 
 # -------------------- Endpoints --------------------
@@ -159,9 +189,11 @@ async def metar_tgftp(icao: str):
 def health():
     return PlainTextResponse("OK")
 
+
 @app.api_route("/api", methods=["GET", "POST"])
+@app.api_route("/api/", methods=["GET", "POST"], include_in_schema=False)
 async def ecowitt_report(request: Request):
-    # tenta POST form-data; senão usa query string
+    # 1) obter dados (POST form ou query string)
     data = {}
     try:
         form = await request.form()
@@ -171,14 +203,14 @@ async def ecowitt_report(request: Request):
     if not data:
         data = dict(request.query_params)
 
-    # debug dump do payload bruto em ficheiro único
+    # 2) log bruto (apenas para debugging)
     try:
         with open(PAYLOAD_LOG, "a", encoding="utf-8") as f:
             f.write(f"{datetime.utcnow().isoformat()}Z {json.dumps(data)}\n")
     except Exception:
         pass
 
-    # ---------------- conversões (sem defaults perigosos) ----------------
+    # 3) conversões
     tempf = to_float(data, "tempf")
     temp_c = f_to_c(tempf) if tempf is not None else None
 
@@ -195,23 +227,96 @@ async def ecowitt_report(request: Request):
     wind_kmh     = mph_to_kmh(to_float(data, "windspeedmph") or 0.0)
     gust_kmh     = mph_to_kmh(to_float(data, "windgustmph") or 0.0)
     wind_dir_deg = to_float(data, "winddir")
+
     pressure_hpa = inHg_to_hPa(
         (to_float(data, "baromrelin") if to_float(data, "baromrelin") is not None else None)
         or (to_float(data, "baromabsin") if to_float(data, "baromabsin") is not None else None)
         or 0.0
     )
+
     rain_rate_mmph = in_to_mm(to_float(data, "rainratein") or 0.0)
     rain_day_mm    = in_to_mm(to_float(data, "dailyrainin") or 0.0)
     solar_wm2      = to_float(data, "solarradiation")
     uv_index       = to_float(data, "uv")
 
-    # timestamps corretos (DST automático)
-    tz = ZoneInfo("Europe/Lisbon")
+    # timestamps (com fuso local)
+    tz       = ZoneInfo("Europe/Lisbon")
     ts_utc   = datetime.now(timezone.utc)
     ts_local = ts_utc.astimezone(tz)
-    # --------------------------------------------------------------------
 
-    # prepara payload live
+    # 4) apparent temperature
+    apparent_c = apparent_temperature_c(temp_c, rh_pct, wind_kmh)
+
+    # 5) BD: calcular extremos do dia + inserir esta leitura
+    def _insert_and_extremes():
+        conn = DB_POOL.get_connection()
+        cur = conn.cursor()
+        try:
+            # extremos já existentes para o dia local
+            cur.execute("""
+                SELECT MIN(temp_c), MAX(temp_c)
+                FROM observations
+                WHERE station_id = %s
+                  AND DATE(ts_local) = DATE(%s)
+            """, ("meteomg", ts_local))
+            row = cur.fetchone() or (None, None)
+            prev_min, prev_max = row
+
+            # normalizar possíveis Decimals para float
+            prev_min = float(prev_min) if prev_min is not None else None
+            prev_max = float(prev_max) if prev_max is not None else None
+
+            # incluir a leitura atual
+            tmin = prev_min
+            tmax = prev_max
+            if temp_c is not None:
+                tmin = temp_c if (prev_min is None or temp_c < prev_min) else prev_min
+                tmax = temp_c if (prev_max is None or temp_c > prev_max) else prev_max
+
+            # INSERT com min/max/apparent
+            cur.execute("""
+                INSERT INTO observations
+                (station_id, ts_local, ts_utc,
+                 temp_c, temp_max_c, temp_min_c,
+                 rh_pct, dewpoint_c,
+                 wind_kmh, gust_kmh, wind_dir_deg,
+                 pressure_hpa, rain_rate_mmph, rain_day_mm,
+                 solar_wm2, apparent_c, uv_index)
+                VALUES
+                (%s, %s, %s,
+                 %s, %s, %s,
+                 %s, %s,
+                 %s, %s, %s,
+                 %s, %s, %s,
+                 %s, %s, %s)
+            """, (
+                "meteomg", ts_local, ts_utc,
+                temp_c, tmax, tmin,
+                rh_pct, dewpoint_c,
+                wind_kmh, gust_kmh, wind_dir_deg,
+                pressure_hpa, rain_rate_mmph, rain_day_mm,
+                solar_wm2, apparent_c, uv_index
+            ))
+            conn.commit()
+            return tmin, tmax
+        finally:
+            try:
+                cur.close()
+            finally:
+                conn.close()
+
+    try:
+        tmin, tmax = await asyncio.to_thread(_insert_and_extremes)
+    except Exception as e:
+        # se a BD falhar, loga e prossegue (não impede o live.json)
+        tmin, tmax = None, None
+        try:
+            with open(os.path.join(LOG_DIR, "db_errors.log"), "a", encoding="utf-8") as f:
+                f.write(f"{datetime.utcnow().isoformat()}Z DB_FAIL {e}\n")
+        except Exception:
+            pass
+
+    # 6) live.json (já com min/max e apparent)
     live_payload = {
         "v": 1,
         "station": "meteomg",
@@ -220,6 +325,9 @@ async def ecowitt_report(request: Request):
         "age_s": 0,
         "stale": False,
         "temp_c": temp_c,
+        "temp_max_c": tmax,
+        "temp_min_c": tmin,
+        "apparent_c": apparent_c,
         "rh_pct": rh_pct,
         "dewpoint_c": dewpoint_c,
         "wind_kmh": wind_kmh,
@@ -232,52 +340,12 @@ async def ecowitt_report(request: Request):
         "uv_index": uv_index,
     }
 
-    # ingerir BD (sem impedir o live.json em caso de falha)
-    def _insert():
-        conn = DB_POOL.get_connection()
-        cur = conn.cursor()
-        try:
-            cur.execute(
-                """
-                INSERT INTO observations
-                (station_id, ts_local, ts_utc, temp_c, rh_pct, dewpoint_c, wind_kmh, gust_kmh, wind_dir_deg,
-                 pressure_hpa, rain_rate_mmph, rain_day_mm, solar_wm2, uv_index)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                """,
-                (
-                    "meteomg",
-                    ts_local,
-                    ts_utc,
-                    temp_c,
-                    rh_pct,
-                    dewpoint_c,
-                    wind_kmh,
-                    gust_kmh,
-                    wind_dir_deg,
-                    pressure_hpa,
-                    rain_rate_mmph,
-                    rain_day_mm,
-                    solar_wm2,
-                    uv_index,
-                ),
-            )
-            conn.commit()
-        finally:
-            cur.close()
-            conn.close()
-
     try:
-        await asyncio.to_thread(_insert)
+        save_live_json(live_payload)
     except Exception as e:
-        # loga erro de BD mas não falha o endpoint
-        try:
-            with open(os.path.join(LOG_DIR, "db_errors.log"), "a", encoding="utf-8") as f:
-                f.write(f"{datetime.utcnow().isoformat()}Z DB_FAIL {e}\n")
-        except Exception:
-            pass
+        with open(os.path.join(LOG_DIR, "live_errors.log"), "a", encoding="utf-8") as f:
+            f.write(f"{datetime.utcnow().isoformat()}Z LIVE_FAIL {e}\n")
 
-    # live.json (sempre)
-    save_live_json(live_payload)
     return PlainTextResponse("Success. Update done\n")
 
 

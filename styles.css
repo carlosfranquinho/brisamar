@@ -89,17 +89,13 @@ body {
     height: unset;
 }
 
-.now-temp {
-    line-height: 1;
-}
+.now-temp { position: relative; display: inline-block; }
 
 .now-temp .deg {
-    display: inline-block;
-    font-size: .85em;
-    margin-left: 6px;
-    color: var(--ink);
-    transform: translateY(-.12em);
-    line-height: 1;
+  font-size: clamp(24px, 2.6vw, 40px);
+  margin-left: 8px;
+  transform: translateY(-0.18em);
+  white-space: nowrap; /* impede quebra */
 }
 
 .now-temp #temp {
@@ -107,6 +103,19 @@ body {
     font-weight: 900;
     letter-spacing: -2px;
 }
+
+.now-temp { position: relative; display: inline-block; }
+.now-ext {
+  position: absolute;
+  right: -0.5ch;
+  font-weight: 800;
+  font-size: clamp(14px, 2.1vw, 22px);
+  line-height: 1;
+}
+.now-ext--max { top: -0.35em;  color: #dc2626; }  /* vermelho */
+.now-ext--min { bottom: -0.35em; color: #2563eb; } /* azul */
+
+.u, .deg { white-space: nowrap; }
 
 .feels {
     color: var(--muted);
@@ -134,12 +143,7 @@ body {
 }
 
 .now-metrics .m strong {
-    flex: 1;
-    text-align: right;
-    display: flex;
-    /* garante alinhamento do número + unidade */
-    justify-content: flex-end;
-    gap: .25ch;
+ flex-wrap: nowrap; 
 }
 
 #rainToday {
@@ -497,6 +501,11 @@ body {
     .chart-canvas {
         height: clamp(200px, 36vh, 340px);
     }
+}
+
+@media (max-width: 640px) {
+  .now-metrics { grid-template-columns: 1fr; }
+  .now-metrics span { min-width: 96px; }
 }
 
 @media (max-width: 520px) {

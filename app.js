@@ -12,27 +12,26 @@ const ACCENT2 = (CSSVARS.getPropertyValue("--accent-2") || "#94a3b8").trim();
 
 /* Icons */
 const ICON_PATHS = {
-  "clear-day":            "icons/clear-day.svg",
-  "clear-night":          "icons/clear-night.svg",
-  "partly-cloudy-day":    "icons/partly-cloudy-day.svg",
-  "partly-cloudy-night":  "icons/partly-cloudy-night.svg",
-  "cloudy":               "icons/cloudy.svg",
-  "overcast":             "icons/cloudy.svg",
-  "drizzle":              "icons/drizzle.svg",
-  "rain":                 "icons/rain.svg",
-  "heavy-rain":           "icons/heavy-rain.svg",
-  "thunder":              "icons/thunder.svg",
-  "snow":                 "icons/snow.svg",
-  "sleet":                "icons/sleet.svg",
-  "freezing-rain":        "icons/freezing-rain.svg",
-  "fog":                  "icons/fog.svg",
-  "wind":                 "icons/wind.svg",
-  "unknown":              "icons/cloudy.svg"
+  "clear-day": "icons/clear-day.svg",
+  "clear-night": "icons/clear-night.svg",
+  "partly-cloudy-day": "icons/partly-cloudy-day.svg",
+  "partly-cloudy-night": "icons/partly-cloudy-night.svg",
+  cloudy: "icons/cloudy.svg",
+  overcast: "icons/cloudy.svg",
+  drizzle: "icons/drizzle.svg",
+  rain: "icons/rain.svg",
+  "heavy-rain": "icons/heavy-rain.svg",
+  thunder: "icons/thunder.svg",
+  snow: "icons/snow.svg",
+  sleet: "icons/sleet.svg",
+  "freezing-rain": "icons/freezing-rain.svg",
+  fog: "icons/fog.svg",
+  wind: "icons/wind.svg",
+  unknown: "icons/cloudy.svg",
 };
 function iconUrl(name) {
   return ICON_PATHS[name] || ICON_PATHS["unknown"];
 }
-
 
 // HISTÓRICO/GRÁFICO (globais)
 let chart = null;
@@ -102,7 +101,7 @@ async function loadMetarTGFTP() {
     if (!j.ok) return;
 
     const sunrise = $("#sunrise")?.textContent || "06:00";
-    const sunset  = $("#sunset")?.textContent  || "21:00";
+    const sunset = $("#sunset")?.textContent || "21:00";
     const day = isDay(Date.now(), sunrise, sunset);
     const name = iconNameFromMetarRaw(j.raw, day);
 
@@ -115,7 +114,6 @@ async function loadMetarTGFTP() {
     console.warn("METAR TGFTP falhou:", e);
   }
 }
-
 
 let countdownTimer = null,
   nextRefreshAt = 0;
@@ -190,9 +188,16 @@ function renderNowIcon(ipmaCode, sunriseHHMM, sunsetHHMM) {
 
   // classes de estado (mantive a tua lógica)
   img.classList.remove("sunny", "alert", "neutral");
-  if (["clear-day","clear-night","partly-cloudy-day","partly-cloudy-night"].includes(name)) {
+  if (
+    [
+      "clear-day",
+      "clear-night",
+      "partly-cloudy-day",
+      "partly-cloudy-night",
+    ].includes(name)
+  ) {
     img.classList.add("sunny");
-  } else if (["thunder","heavy-rain"].includes(name)) {
+  } else if (["thunder", "heavy-rain"].includes(name)) {
     img.classList.add("alert");
   } else {
     img.classList.add("neutral");
@@ -232,7 +237,9 @@ async function loadForecast() {
       li.innerHTML = `
         <div class="d">${label}</div>
         <div class="ic">
-          <img class="bm-ico bm-ico--sm" src="${iconUrl(iconName)}" alt="${iconName.replace(/-/g,' ')}" width="48" height="48">
+          <img class="bm-ico bm-ico--sm" src="${iconUrl(
+            iconName
+          )}" alt="${iconName.replace(/-/g, " ")}" width="48" height="48">
         </div>
         <div class="t">${Math.round(d.tMax)}° | ${Math.round(d.tMin)}°</div>
       `;
@@ -241,7 +248,7 @@ async function loadForecast() {
       // Se quiseres que o ícone grande reflita a previsão de hoje (como já tinhas):
       if (i === 0) {
         const sunrise = $("#sunrise")?.textContent || "06:00";
-        const sunset  = $("#sunset")?.textContent  || "21:00";
+        const sunset = $("#sunset")?.textContent || "21:00";
         renderNowIcon(d.idWeatherType, sunrise, sunset);
       }
     });
@@ -249,7 +256,6 @@ async function loadForecast() {
     console.warn("IPMA falhou:", e);
   }
 }
-
 
 function appendLivePointToChart(j) {
   if (!chart || !HISTORY_WINDOW_POINTS) return;
@@ -309,6 +315,9 @@ async function loadLive() {
   setText("#dew", fmt(j.dewpoint_c, 1) + "°");
   setText("#press", fmt(j.pressure_hpa, 0));
   setText("#uv", fmt(j.uv_index, 1));
+  setText("#solar", fmt(j.solar_wm2, 0));
+  setText("#tmax", fmt(j.temp_max_c, 0) + "°");
+  setText("#tmin", fmt(j.temp_min_c, 0) + "°");
 
   if (j.rain_day_mm != null) setText("#rainToday", fmt(j.rain_day_mm, 1));
 
@@ -365,6 +374,7 @@ async function loadHistory() {
   const temps = rawTemps.map((v) =>
     v == null || v < -10 || v > 55 ? null : Math.max(0, Math.min(43, v))
   );
+  const allTempsNull = temps.every((v) => v === null);
 
   // chuva 24h aprox. (10 min ≈ 1/6 h)
   const rain24 = rainRate.reduce((a, b) => a + b / 6, 0);
@@ -384,19 +394,20 @@ async function loadHistory() {
           label: "Temperatura (°C)",
           data: temps,
           yAxisID: "y1",
-          borderColor: ACCENT, // <- azul do tema
+          borderColor: ACCENT,
           backgroundColor: "rgba(0,0,0,0)",
           tension: 0.25,
           borderWidth: 2,
           pointRadius: 0,
-          spanGaps: false,
+          spanGaps: true, // <- permite “buracos” sem tentar desenhar
+          hidden: allTempsNull, // <- se tudo null, não mostra a série
         },
         {
           type: "bar",
           label: "Precipitação (mm/h)",
           data: rainRate,
           yAxisID: "y2",
-          backgroundColor: ACCENT2, // <- cinza/azulado do tema
+          backgroundColor: ACCENT2,
           borderColor: ACCENT2,
           borderWidth: 1,
           maxBarThickness: 18,
