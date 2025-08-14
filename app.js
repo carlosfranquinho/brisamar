@@ -16,7 +16,7 @@ const ICON_PATHS = {
   "partly-cloudy-day":    "icons/partly-cloudy-day.svg",
   "partly-cloudy-night":  "icons/partly-cloudy-night.svg",
   "cloudy":               "icons/cloudy.svg",
-  "overcast":             "icons/overcast.svg",
+  "overcast":             "icons/cloudy.svg",
   "drizzle":              "icons/drizzle.svg",
   "rain":                 "icons/rain.svg",
   "heavy-rain":           "icons/heavy-rain.svg",
@@ -26,7 +26,7 @@ const ICON_PATHS = {
   "freezing-rain":        "icons/freezing-rain.svg",
   "fog":                  "icons/fog.svg",
   "wind":                 "icons/wind.svg",
-  "unknown":              "icons/unknown.svg"
+  "unknown":              "icons/cloudy.svg"
 };
 function iconUrl(name) {
   return ICON_PATHS[name] || ICON_PATHS["unknown"];
