@@ -219,33 +219,40 @@ function setSunTimes(date = new Date()) {
   $("#sunset").textContent = t.sunset.toLocaleTimeString("pt-PT", opt);
 }
 
-/* Previsão IPMA (3 dias) */
 async function loadForecast() {
   try {
     const r = await fetch(IPMA_FORECAST, { cache: "no-store" });
     const j = await r.json();
-    const days = j.data?.slice(0, 3) || [];
+
+    // agora queremos 4 dias
+    const days = j.data?.slice(0, 4) || [];
     const ul = $("#forecast");
     ul.innerHTML = "";
 
     days.forEach((d, i) => {
       const day = new Date(d.forecastDate);
-      const label = day.toLocaleDateString("pt-PT", { weekday: "short" });
+      // 0 -> "hoje", 1 -> "amanhã", restantes -> dia da semana (abreviado)
+      const label =
+        i === 0
+          ? "hoje"
+          : i === 1
+            ? "amanhã"
+            : day.toLocaleDateString("pt-PT", { weekday: "short" });
+
       const iconName = iconNameFromIpma(d.idWeatherType, /*isDaytime*/ true);
 
       const li = document.createElement("li");
       li.innerHTML = `
         <div class="d">${label}</div>
         <div class="ic">
-          <img class="bm-ico bm-ico--sm" src="${iconUrl(
-            iconName
-          )}" alt="${iconName.replace(/-/g, " ")}" width="48" height="48">
+          <img class="bm-ico bm-ico--sm" src="${iconUrl(iconName)}"
+               alt="${iconName.replace(/-/g, " ")}" width="48" height="48">
         </div>
         <div class="t">${Math.round(d.tMax)}° | ${Math.round(d.tMin)}°</div>
       `;
       ul.appendChild(li);
 
-      // Se quiseres que o ícone grande reflita a previsão de hoje (como já tinhas):
+      // continua a usar o 1.º dia para o ícone grande do topo
       if (i === 0) {
         const sunrise = $("#sunrise")?.textContent || "06:00";
         const sunset = $("#sunset")?.textContent || "21:00";
@@ -256,6 +263,7 @@ async function loadForecast() {
     console.warn("IPMA falhou:", e);
   }
 }
+
 
 function appendLivePointToChart(j) {
   if (!chart || !HISTORY_WINDOW_POINTS) return;
