@@ -4,9 +4,14 @@ from fastapi.middleware.cors import CORSMiddleware
 import mysql.connector
 from datetime import datetime, timezone, timedelta
 import json
-import os, time, httpx
+import os, time
 import math
 from zoneinfo import ZoneInfo
+
+try:
+    import httpx  # opcional
+except Exception:
+    httpx = None
 
 app = FastAPI()
 
@@ -95,34 +100,49 @@ async def metar_tgftp(icao: str):
     icao = icao.upper().strip()
     cpath = cache_path(icao)
 
-    # cache fresco?
+    # 1) tenta devolver cache fresca
     if os.path.exists(cpath) and (time.time() - os.path.getmtime(cpath) < METAR_TTL_S):
         with open(cpath, "r", encoding="utf-8") as f:
-            cached = json.load(f)          # <— LER JSON
+            cached = json.load(f)
         return JSONResponse(content=cached, headers={"Cache-Control": "no-store"})
 
+    # 2) tenta buscar à NOAA (com httpx se houver; caso contrário urllib)
     url = f"https://tgftp.nws.noaa.gov/data/observations/metar/stations/{icao}.TXT"
+    lines = None
     try:
-        async with httpx.AsyncClient(timeout=10) as cli:
-            r = await cli.get(url)
-            r.raise_for_status()
-            lines = [ln.strip() for ln in r.text.strip().splitlines()]
+        if httpx is not None:
+            async with httpx.AsyncClient(timeout=10) as cli:
+                r = await cli.get(url)
+                r.raise_for_status()
+                txt = r.text
+        else:
+            # fallback stdlib (bloqueante, mas raramente chamado por causa do cache)
+            import urllib.request
+            with urllib.request.urlopen(url, timeout=10) as resp:
+                txt = resp.read().decode("utf-8", errors="replace")
+
+        lines = [ln.strip() for ln in txt.strip().splitlines() if ln.strip()]
     except Exception as e:
+        # 3) se falhar, devolve cache antiga se existir
         if os.path.exists(cpath):
             with open(cpath, "r", encoding="utf-8") as f:
-                cached = json.load(f)      # <— LER JSON
+                cached = json.load(f)
             return JSONResponse(content=cached, headers={"Cache-Control": "no-store"})
-        return JSONResponse({"ok": False, "error": "fetch_failed", "detail": str(e)}, status_code=502)
+        # sem cache: devolve erro útil
+        return JSONResponse(
+            status_code=502,
+            content={"ok": False, "error": "fetch_failed", "detail": str(e)}
+        )
 
+    # 4) construir objeto de saída
     obs_time = lines[0].replace("/", "-") if lines else ""
-    raw = " ".join(lines[1:]) if len(lines) > 1 else ""
-
+    raw = " ".join(lines[1:]) if lines and len(lines) > 1 else ""
     out = {"ok": True, "time": obs_time, "raw": raw}
 
-    # guardar cache como JSON “limpo”
+    # 5) guardar cache como JSON “limpo”
     tmp = cpath + ".tmp"
     with open(tmp, "w", encoding="utf-8") as f:
-        json.dump(out, f, ensure_ascii=False, indent=2)  # <— ESCREVER JSON
+        json.dump(out, f, ensure_ascii=False, indent=2)
     os.replace(tmp, cpath)
 
     return JSONResponse(content=out, headers={"Cache-Control": "no-store"})
