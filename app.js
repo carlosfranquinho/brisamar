@@ -1,10 +1,9 @@
 /* CONFIG */
 const LIVE_URL = "https://meteomg-tunel.franquinho.info/live";
 const HIST_URL = "https://meteomg-tunel.franquinho.info/history?hours=24";
-
-/* IPMA – mete aqui o teu local (globalIdLocal)  */
 const IPMA_GLOBAL_ID = 1100900;
 const IPMA_FORECAST = `https://api.ipma.pt/open-data/forecast/meteorology/cities/daily/${IPMA_GLOBAL_ID}.json`;
+const PUSH_MS = 120000;
 
 /* Helpers */
 const $ = (sel) => document.querySelector(sel);
@@ -244,6 +243,8 @@ async function loadLive() {
   setText("#press", fmt(j.pressure_hpa, 0));
   setText("#uv", fmt(j.uv_index, 1));
 
+  if (j.rain_day_mm != null) setText("#rainToday", fmt(j.rain_day_mm, 1));
+
   const ts = localTime(j.ts_local ?? j.ts_utc);
   setSunTimes(ts);
 
@@ -257,7 +258,7 @@ async function loadLive() {
     flag.className = "ok";
   }
 
-  startCountdown(60000);
+  startCountdown(PUSH_MS);
   appendLivePointToChart(j);
 }
 
@@ -293,6 +294,8 @@ async function loadHistory() {
   // chuva 24h (amostragem ~10 min => 1/6 h por ponto)
   const rain24 = rainRate.reduce((a, b) => a + b / 6, 0);
   $("#rain24").textContent = fmt(rain24, 1);
+
+  setText("#rain24", fmt(rain24, 1));
 
   const ctx = $("#histChart");
   if (chart) chart.destroy();
@@ -365,7 +368,7 @@ async function boot() {
     await loadLive(); // garante #sunrise / #sunset
     await loadForecast(); // agora já há horas reais para o ícone
     await loadHistory(); // gráfico pode vir por fim
-    setInterval(loadLive, 60000);
+    setInterval(loadLive, PUSH_MS);
   } catch (err) {
     console.error(err);
   }
