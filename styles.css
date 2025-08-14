@@ -71,25 +71,23 @@ body {
 }
 
 .now-icon {
-    width: clamp(72px, 9vw, 120px);
-    height: clamp(72px, 9vw, 120px);
+    position: relative;
+    width: clamp(68px, 8.5vw, 112px);
+    height: clamp(68px, 8.5vw, 112px);
     border-radius: 50%;
     display: grid;
     place-items: center;
-    color: #fff;
-    background: radial-gradient(120% 120% at 30% 30%, #fbbf24, #f59e0b);
-    box-shadow: 0 0 0 6px #fff inset, 0 0 0 2px #e5e7eb inset, 0 4px 16px #0001;
+    background: transparent;
+    border: 3px solid #e5e7eb;
+    box-shadow: 0 1px 6px #0001;
 }
 
 .now-icon svg {
     width: 68%;
     height: 68%;
     color: rgba(0, 0, 0, .45);
-    /* traço mais escuro = legível no amarelo */
     stroke-width: 2.25;
-    /* >2 sem perder leveza */
     filter: drop-shadow(0 1px 0 rgba(255, 255, 255, .35));
-    /* subtil realce */
 }
 
 
@@ -98,11 +96,12 @@ body {
 }
 
 .now-temp .deg {
-    font-size: 0.6em;
+    display: inline-block;
+    font-size: .85em;
     margin-left: 6px;
-    color: var(--accent);
-    vertical-align: text-top;
-    transform: translateY(-0.12em);
+    color: var(--ink);
+    transform: translateY(-.12em);
+    line-height: 1;
 }
 
 .now-temp #temp {
@@ -137,8 +136,18 @@ body {
 }
 
 .now-metrics .m strong {
-    text-align: right;
     flex: 1;
+    text-align: right;
+    display: flex;
+    /* garante alinhamento do número + unidade */
+    justify-content: flex-end;
+    gap: .25ch;
+}
+
+#rainToday {
+    display: inline-block;
+    min-width: 3.5ch;
+    text-align: right;
 }
 
 .now-metrics span {
@@ -315,7 +324,7 @@ body {
 /* responsivo */
 @media (max-width: 980px) {
     .hero-top {
-  grid-template-columns: minmax(320px, 680px) 1fr; 
+        grid-template-columns: minmax(320px, 680px) 1fr;
     }
 
     .bottom {
@@ -355,13 +364,11 @@ body {
     }
 }
 
-/* foco visível mas discreto para links/controles, caso existam */
 :focus-visible {
     outline: 3px solid #3b82f666;
     outline-offset: 3px;
 }
 
-/* respeitar preferência de utilizadores que evitam animações */
 @media (prefers-reduced-motion: reduce) {
     * {
         animation: none !important;
@@ -369,27 +376,12 @@ body {
     }
 }
 
-/* 1) Grau (ºC): alinhamento seguro em todos os browsers */
-.now-temp .deg {
-    font-size: 1em;
-    margin-left: 6px;
-    color: var(--accent);
-    vertical-align: text-top;
-    transform: translateY(-0.18em);
-    display: inline-block;
-    line-height: 1;
-    white-space: nowrap;
-}
-
-
-/* 2) Cartões da previsão: evitar que as temperaturas quebrem linha */
 .days .t {
     white-space: nowrap;
     font-variant-numeric: tabular-nums;
     /* números com largura igual */
 }
 
-/* 3) Garantir que os 3 cartões ficam com a MESMA altura mesmo com textos diferentes */
 .days {
     align-items: stretch;
 }
@@ -399,19 +391,16 @@ body {
     grid-auto-rows: min-content;
 }
 
-/* 4) Grelha de métricas: títulos não “saltam” em ecrãs muito largos */
 @media (min-width: 1280px) {
     .now-metrics {
         grid-template-columns: repeat(2, minmax(280px, 1fr));
     }
 }
 
-/* 5) Canvas do gráfico: evita reflows desnecessários e dá robustez ao resize */
 .chart-canvas {
     contain: content;
 }
 
-/* 6) Ícone grande: se for meramente decorativo, podes usar isto */
 .now-icon[aria-hidden="true"] svg {
     pointer-events: none;
 }

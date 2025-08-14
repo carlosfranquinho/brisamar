@@ -4,6 +4,9 @@ const HIST_URL = "https://meteomg-tunel.franquinho.info/history?hours=24";
 const IPMA_GLOBAL_ID = 1100900;
 const IPMA_FORECAST = `https://api.ipma.pt/open-data/forecast/meteorology/cities/daily/${IPMA_GLOBAL_ID}.json`;
 const PUSH_MS = 120000;
+const CSSVARS = getComputedStyle(document.documentElement);
+const ACCENT = (CSSVARS.getPropertyValue('--accent') || '#3b82f6').trim();
+const ACCENT2 = (CSSVARS.getPropertyValue('--accent-2') || '#94a3b8').trim();
 
 // HISTÓRICO/GRÁFICO (globais)
 let chart = null;
@@ -314,7 +317,7 @@ async function loadHistory() {
                     label: "Temperatura (°C)",
                     data: temps,
                     yAxisID: "y1",
-                    borderColor: "#000",
+                    borderColor: ACCENT,                     // <- azul do tema
                     backgroundColor: "rgba(0,0,0,0)",
                     tension: 0.25,
                     borderWidth: 2,
@@ -326,12 +329,13 @@ async function loadHistory() {
                     label: "Precipitação (mm/h)",
                     data: rainRate,
                     yAxisID: "y2",
-                    backgroundColor: "#999",
-                    borderColor: "#000",
+                    backgroundColor: ACCENT2,                // <- cinza/azulado do tema
+                    borderColor: ACCENT2,
                     borderWidth: 1,
                     maxBarThickness: 18,
                 },
             ],
+
         },
         options: {
             responsive: true,
