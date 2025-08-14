@@ -1,13 +1,14 @@
 /* CONFIG */
-const LIVE_URL = "https://meteomg-tunel.franquinho.info/live";
-const HIST_URL = "https://meteomg-tunel.franquinho.info/history?hours=24";
+const API_BASE = "https://meteomg-tunel.franquinho.info";
+const LIVE_URL = `${API_BASE}/live`;
+const HIST_URL = `${API_BASE}/history?hours=24`;
+const METAR_URL = `${API_BASE}/metar-tgftp/LPMR`;
 const IPMA_GLOBAL_ID = 1100900;
 const IPMA_FORECAST = `https://api.ipma.pt/open-data/forecast/meteorology/cities/daily/${IPMA_GLOBAL_ID}.json`;
 const PUSH_MS = 120000;
 const CSSVARS = getComputedStyle(document.documentElement);
 const ACCENT = (CSSVARS.getPropertyValue("--accent") || "#3b82f6").trim();
 const ACCENT2 = (CSSVARS.getPropertyValue("--accent-2") || "#94a3b8").trim();
-const METAR_URL = "https://meteomg-tunel.franquinho.info/metar-tgftp/LPMR";
 
 /* Icons */
 const ICON_PATHS = {
@@ -438,7 +439,9 @@ async function boot() {
     await loadMetarTGFTP(); // usa METAR (observado) para o ícone atual
     await loadForecast(); // agora já há horas reais para o ícone
     await loadHistory(); // gráfico pode vir por fim
-    setInterval(loadLive, PUSH_MS);
+    setInterval(() => {
+      loadLive().catch(console.error);
+    }, PUSH_MS);
   } catch (err) {
     console.error(err);
   }
