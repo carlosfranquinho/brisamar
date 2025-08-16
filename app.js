@@ -33,6 +33,61 @@ function iconUrl(name) {
   return ICON_PATHS[name] || ICON_PATHS["unknown"];
 }
 
+/* Now icon state + priorities */
+const NOW_ICON_PRIORITY = { default: 0, ipma: 50, metar: 100 };
+const nowIconState = {
+  priority: -1,
+  name: "unknown",
+  source: "none",
+  setAt: 0,
+};
+
+function setNowIcon(name, source, priority) {
+  const img = document.getElementById("bm-now-ico");
+  if (!img) return;
+
+  if (priority < nowIconState.priority) {
+    console.debug("[icon] skip (lower priority)", {
+      name,
+      source,
+      priority,
+      current: nowIconState,
+    });
+    return;
+  }
+
+  nowIconState.priority = priority;
+  nowIconState.name = name;
+  nowIconState.source = source;
+  nowIconState.setAt = Date.now();
+
+  img.src = iconUrl(name);
+  img.alt = name.replace(/-/g, " ");
+  img.dataset.source = source; // p/ inspeção rápida no DOM
+  img.title = `Ícone: ${name} • fonte: ${source}`; // hover mostra a origem
+
+  img.classList.remove("sunny", "alert", "neutral");
+  if (
+    [
+      "clear-day",
+      "clear-night",
+      "partly-cloudy-day",
+      "partly-cloudy-night",
+    ].includes(name)
+  ) {
+    img.classList.add("sunny");
+  } else if (["thunder", "heavy-rain"].includes(name)) {
+    img.classList.add("alert");
+  } else {
+    img.classList.add("neutral");
+  }
+
+  console.debug("[icon] set", nowIconState);
+}
+
+// opcional: helper para consultar no console
+window.getNowIconSource = () => ({ ...nowIconState });
+
 // HISTÓRICO/GRÁFICO (globais)
 let chart = null;
 let HISTORY_WINDOW_POINTS = 0; // nº de pontos que representam as 24h iniciais
@@ -105,11 +160,7 @@ async function loadMetarTGFTP() {
     const day = isDay(Date.now(), sunrise, sunset);
     const name = iconNameFromMetarRaw(j.raw, day);
 
-    const img = document.getElementById("bm-now-ico");
-    if (img) {
-      img.src = iconUrl(name);
-      img.alt = name.replace(/-/g, " ");
-    }
+    setNowIcon(name, `metar:lpmr`, NOW_ICON_PRIORITY.metar);
   } catch (e) {
     console.warn("METAR TGFTP falhou:", e);
   }
@@ -180,28 +231,7 @@ function iconNameFromIpma(code, isDaytime) {
 function renderNowIcon(ipmaCode, sunriseHHMM, sunsetHHMM) {
   const day = isDay(Date.now(), sunriseHHMM, sunsetHHMM);
   const name = iconNameFromIpma(ipmaCode, day);
-  const img = document.getElementById("bm-now-ico");
-  if (!img) return;
-
-  img.src = iconUrl(name);
-  img.alt = name.replace(/-/g, " ");
-
-  // classes de estado (mantive a tua lógica)
-  img.classList.remove("sunny", "alert", "neutral");
-  if (
-    [
-      "clear-day",
-      "clear-night",
-      "partly-cloudy-day",
-      "partly-cloudy-night",
-    ].includes(name)
-  ) {
-    img.classList.add("sunny");
-  } else if (["thunder", "heavy-rain"].includes(name)) {
-    img.classList.add("alert");
-  } else {
-    img.classList.add("neutral");
-  }
+  setNowIcon(name, "ipma-forecast", NOW_ICON_PRIORITY.ipma);
 }
 
 /* Sun times (coordenadas aproximadas – ajusta para tua estação) */
@@ -234,8 +264,8 @@ async function loadForecast() {
         i === 0
           ? "hoje"
           : i === 1
-            ? "amanhã"
-            : day.toLocaleDateString("pt-PT", { weekday: "short" });
+          ? "amanhã"
+          : day.toLocaleDateString("pt-PT", { weekday: "short" });
 
       const iconName = iconNameFromIpma(d.idWeatherType, /*isDaytime*/ true);
       const tMax = Number.isFinite(+d.tMax) ? Math.round(d.tMax) : null;
@@ -246,8 +276,8 @@ async function loadForecast() {
   <div class="d">${label}</div>
   <div class="ic">
     <img class="bm-ico bm-ico--sm" src="${iconUrl(
-        iconName
-      )}" alt="${iconName.replace(/-/g, " ")}" width="48" height="48">
+      iconName
+    )}" alt="${iconName.replace(/-/g, " ")}" width="48" height="48">
   </div>
   <div class="t">
     <span class="hi">${tMax != null ? `${tMax}°` : "—"}</span>
