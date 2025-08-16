@@ -374,8 +374,8 @@ async function loadLive() {
   setText("#press", fmt(j.pressure_hpa, 0));
   setText("#uv", fmt(j.uv_index, 1));
   setText("#solar", fmt(j.solar_wm2, 0));
-  setExt("#tmax", "máx", `${fmt(j.temp_max_c, 0)}°`);
-  setExt("#tmin", "min", `${fmt(j.temp_min_c, 0)}°`);
+  setExt("#tmax", "máx", `${fmt(j.temp_max_c, 1)}°`);
+  setExt("#tmin", "min", `${fmt(j.temp_min_c, 1)}°`);
 
   if (j.rain_day_mm != null) setText("#rainToday", fmt(j.rain_day_mm, 1));
 
