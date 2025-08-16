@@ -87,7 +87,7 @@ function setNowIcon(name, source, priority) {
 
 // HISTÓRICO/GRÁFICO (globais)
 let chart = null;
-let HISTORY_WINDOW_POINTS = 0;
+let HISTORY_WINDOW_POINTS = 0; 
 let chartLastTs = 0;
 
 /* Helpers */
@@ -262,8 +262,8 @@ async function loadForecast() {
         i === 0
           ? "hoje"
           : i === 1
-            ? "amanhã"
-            : day.toLocaleDateString("pt-PT", { weekday: "short" });
+          ? "amanhã"
+          : day.toLocaleDateString("pt-PT", { weekday: "short" });
 
       const iconName = iconNameFromIpma(d.idWeatherType, /*isDaytime*/ true);
       const tMax = Number.isFinite(+d.tMax) ? Math.round(d.tMax) : null;
@@ -274,8 +274,8 @@ async function loadForecast() {
   <div class="d">${label}</div>
   <div class="ic">
     <img class="bm-ico bm-ico--sm" src="${iconUrl(
-        iconName
-      )}" alt="${iconName.replace(/-/g, " ")}" width="48" height="48">
+      iconName
+    )}" alt="${iconName.replace(/-/g, " ")}" width="48" height="48">
   </div>
   <div class="t">
     <span class="hi">${tMax != null ? `${tMax}°` : "—"}</span>
@@ -348,34 +348,6 @@ function appendLivePointToChart(j) {
   chart.update("none");
 }
 
-function setExtremeLine(containerSel, label, val) {
-  const el = document.querySelector(containerSel);
-  if (!el) return;
-
-  // se não há valor, esconde a linha
-  if (val == null || isNaN(val)) {
-    el.style.display = "none";
-    return;
-  }
-  el.style.display = "";
-
-  // garante sub-elementos
-  const lbl = el.querySelector(".lbl") || el.appendChild(Object.assign(document.createElement("span"), { className: "lbl" }));
-  const vEl = el.querySelector(".val") || el.appendChild(Object.assign(document.createElement("span"), { className: "val" }));
-
-  lbl.textContent = label;
-
-  const txt = `${Math.round(Number(val))}°C`;
-  const prev = vEl.dataset.val ?? vEl.textContent;
-  vEl.textContent = txt;
-  vEl.dataset.val = txt;
-
-  if (String(prev) !== String(txt)) {
-    vEl.classList.add("pulse");
-    setTimeout(() => vEl.classList.remove("pulse"), 350);
-  }
-}
-
 /* Live */
 async function loadLive() {
   const r = await fetch(LIVE_URL, {
@@ -396,9 +368,8 @@ async function loadLive() {
   setText("#press", fmt(j.pressure_hpa, 0));
   setText("#uv", fmt(j.uv_index, 1));
   setText("#solar", fmt(j.solar_wm2, 0));
-
-  setExtremeLine("#tmax", "máxima de hoje:", j.temp_max_c);
-  setExtremeLine("#tmin", "mínima de hoje:", j.temp_min_c);
+  setText("#tmax", fmt(j.temp_max_c, 0) + "°");
+  setText("#tmin", fmt(j.temp_min_c, 0) + "°");
 
   if (j.rain_day_mm != null) setText("#rainToday", fmt(j.rain_day_mm, 1));
 
