@@ -114,26 +114,28 @@ body {
     display: inline-block;
 }
 
-.now-ext {
-    position: absolute;
-    right: -0.5ch;
-    font-weight: 800;
-    font-size: clamp(14px, 2.1vw, 22px);
-    line-height: 1;
+
+/* bloco ao lado do número grande */
+.now-extremes {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-left: clamp(8px, 1.5vw, 14px);
 }
 
-.now-ext--max {
-    top: -0.35em;
-    color: #dc2626;
+/* texto ligeiramente menor que o número grande */
+.now-extremes #tmax,
+.now-extremes #tmin {
+  font-size: clamp(12px, 1.7vw, 15px);
+  line-height: 1.1;
+  font-weight: 700;
+  white-space: nowrap;
 }
 
-/* vermelho */
-.now-ext--min {
-    bottom: -0.35em;
-    color: #2563eb;
-}
+/* cores – mantém as usadas para hi/lo */
+.now-extremes #tmax { color: #ef4444; }   /* vermelho */
+.now-extremes #tmin { color: var(--accent); } /* azul do tema */
 
-/* azul */
 
 .u,
 .deg {

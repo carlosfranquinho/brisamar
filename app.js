@@ -85,12 +85,9 @@ function setNowIcon(name, source, priority) {
   console.debug("[icon] set", nowIconState);
 }
 
-// opcional: helper para consultar no console
-window.getNowIconSource = () => ({ ...nowIconState });
-
 // HISTÓRICO/GRÁFICO (globais)
 let chart = null;
-let HISTORY_WINDOW_POINTS = 0; // nº de pontos que representam as 24h iniciais
+let HISTORY_WINDOW_POINTS = 0;
 let chartLastTs = 0;
 
 /* Helpers */
@@ -187,6 +184,7 @@ function startCountdown(ms) {
     weekday: "long",
     day: "numeric",
     month: "long",
+    year: "numeric",
   });
   $("#nowDate").textContent =
     fmtDate.charAt(0).toUpperCase() + fmtDate.slice(1);
@@ -234,7 +232,7 @@ function renderNowIcon(ipmaCode, sunriseHHMM, sunsetHHMM) {
   setNowIcon(name, "ipma-forecast", NOW_ICON_PRIORITY.ipma);
 }
 
-/* Sun times (coordenadas aproximadas – ajusta para tua estação) */
+/* Sun times */
 const LAT = 39.75,
   LON = -8.94;
 function setSunTimes(date = new Date()) {
@@ -264,8 +262,8 @@ async function loadForecast() {
         i === 0
           ? "hoje"
           : i === 1
-          ? "amanhã"
-          : day.toLocaleDateString("pt-PT", { weekday: "short" });
+            ? "amanhã"
+            : day.toLocaleDateString("pt-PT", { weekday: "short" });
 
       const iconName = iconNameFromIpma(d.idWeatherType, /*isDaytime*/ true);
       const tMax = Number.isFinite(+d.tMax) ? Math.round(d.tMax) : null;
@@ -276,8 +274,8 @@ async function loadForecast() {
   <div class="d">${label}</div>
   <div class="ic">
     <img class="bm-ico bm-ico--sm" src="${iconUrl(
-      iconName
-    )}" alt="${iconName.replace(/-/g, " ")}" width="48" height="48">
+        iconName
+      )}" alt="${iconName.replace(/-/g, " ")}" width="48" height="48">
   </div>
   <div class="t">
     <span class="hi">${tMax != null ? `${tMax}°` : "—"}</span>
@@ -350,6 +348,7 @@ function appendLivePointToChart(j) {
   chart.update("none");
 }
 
+
 /* Live */
 async function loadLive() {
   const r = await fetch(LIVE_URL, {
@@ -370,8 +369,21 @@ async function loadLive() {
   setText("#press", fmt(j.pressure_hpa, 0));
   setText("#uv", fmt(j.uv_index, 1));
   setText("#solar", fmt(j.solar_wm2, 0));
-  setText("#tmax", fmt(j.temp_max_c, 0) + "°");
-  setText("#tmin", fmt(j.temp_min_c, 0) + "°");
+
+  function setExtreme(sel, label, val) {
+    const el = document.querySelector(sel);
+    if (!el) return;
+    if (val == null || isNaN(val)) {
+      el.style.display = "none";
+      return;
+    }
+    el.style.display = "";
+    el.textContent = `${label} ${Math.round(Number(val))}°C`;
+  }
+
+  setExtreme("#tmax", "máxima de hoje:", j.temp_max_c);
+  setExtreme("#tmin", "mínima de hoje:", j.temp_min_c);
+
 
   if (j.rain_day_mm != null) setText("#rainToday", fmt(j.rain_day_mm, 1));
 
