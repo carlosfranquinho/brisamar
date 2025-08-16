@@ -91,8 +91,9 @@ body {
 }
 
 .now-temp {
-    position: relative;
-    display: inline-block;
+  display: grid;
+  grid-auto-rows: min-content;
+  align-items: center;
 }
 
 .now-temp .deg {
@@ -109,33 +110,29 @@ body {
     letter-spacing: -2px;
 }
 
-.now-temp {
-    position: relative;
-    display: inline-block;
-}
-
-
-/* bloco ao lado do número grande */
-.now-extremes {
+.now-temp .ext {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
-  margin-left: clamp(8px, 1.5vw, 14px);
+  gap: .5ch;
+  align-items: baseline;
+  line-height: 1.05;
 }
 
-/* texto ligeiramente menor que o número grande */
-.now-extremes #tmax,
-.now-extremes #tmin {
-  font-size: clamp(12px, 1.7vw, 15px);
-  line-height: 1.1;
-  font-weight: 700;
-  white-space: nowrap;
+/* Rótulo pequeno */
+.now-temp .ext .lbl {
+  font-size: .8rem;
+  opacity: .85;
 }
 
-/* cores – mantém as usadas para hi/lo */
-.now-extremes #tmax { color: #ef4444; }   /* vermelho */
-.now-extremes #tmin { color: var(--accent); } /* azul do tema */
+/* Valor visível e um pouco maior que o rótulo,
+   mas claramente menor que o número grande */
+.now-temp .ext .val {
+  font-size: clamp(16px, 2.2vw, 20px);
+  font-weight: 800;
+}
 
+/* Cores (mantendo as tuas) */
+.now-temp .ext.hi { color: #ef4444; }          /* max: vermelho */
+.now-temp .ext.lo { color: var(--accent); }    /* min: azul do tema */
 
 .u,
 .deg {

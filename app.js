@@ -348,6 +348,33 @@ function appendLivePointToChart(j) {
   chart.update("none");
 }
 
+function setExtremeLine(containerSel, label, val) {
+  const el = document.querySelector(containerSel);
+  if (!el) return;
+
+  // se não há valor, esconde a linha
+  if (val == null || isNaN(val)) {
+    el.style.display = "none";
+    return;
+  }
+  el.style.display = "";
+
+  // garante sub-elementos
+  const lbl = el.querySelector(".lbl") || el.appendChild(Object.assign(document.createElement("span"), { className: "lbl" }));
+  const vEl = el.querySelector(".val") || el.appendChild(Object.assign(document.createElement("span"), { className: "val" }));
+
+  lbl.textContent = label;
+
+  const txt = `${Math.round(Number(val))}°C`;
+  const prev = vEl.dataset.val ?? vEl.textContent;
+  vEl.textContent = txt;
+  vEl.dataset.val = txt;
+
+  if (String(prev) !== String(txt)) {
+    vEl.classList.add("pulse");
+    setTimeout(() => vEl.classList.remove("pulse"), 350);
+  }
+}
 
 /* Live */
 async function loadLive() {
@@ -370,20 +397,8 @@ async function loadLive() {
   setText("#uv", fmt(j.uv_index, 1));
   setText("#solar", fmt(j.solar_wm2, 0));
 
-  function setExtreme(sel, label, val) {
-    const el = document.querySelector(sel);
-    if (!el) return;
-    if (val == null || isNaN(val)) {
-      el.style.display = "none";
-      return;
-    }
-    el.style.display = "";
-    el.textContent = `${label} ${Math.round(Number(val))}°C`;
-  }
-
-  setExtreme("#tmax", "máxima de hoje:", j.temp_max_c);
-  setExtreme("#tmin", "mínima de hoje:", j.temp_min_c);
-
+  setExtremeLine("#tmax", "máxima de hoje:", j.temp_max_c);
+  setExtremeLine("#tmin", "mínima de hoje:", j.temp_min_c);
 
   if (j.rain_day_mm != null) setText("#rainToday", fmt(j.rain_day_mm, 1));
 
