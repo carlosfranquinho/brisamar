@@ -62,12 +62,13 @@ body {
 
 /* topo: 2/3 do ecrã (em telas altas) */
 .hero-top {
-  display: grid;
-  grid-template-columns: 1fr;
-  grid-template-rows: auto auto;
-  align-items: start;
-  gap: 16px;
-  min-height: unset; /* evita forçar altura no telemóvel */
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto;
+    align-items: start;
+    gap: 16px;
+    min-height: unset;
+    /* evita forçar altura no telemóvel */
 }
 
 .now-left {
@@ -89,13 +90,17 @@ body {
     height: unset;
 }
 
-.now-temp { position: relative; display: inline-block; }
+.now-temp {
+    position: relative;
+    display: inline-block;
+}
 
 .now-temp .deg {
-  font-size: clamp(24px, 2.6vw, 40px);
-  margin-left: 8px;
-  transform: translateY(-0.18em);
-  white-space: nowrap; /* impede quebra */
+    font-size: clamp(24px, 2.6vw, 40px);
+    margin-left: 8px;
+    transform: translateY(-0.18em);
+    white-space: nowrap;
+    /* impede quebra */
 }
 
 .now-temp #temp {
@@ -104,26 +109,58 @@ body {
     letter-spacing: -2px;
 }
 
-.now-temp { position: relative; display: inline-block; }
+.now-temp {
+    position: relative;
+    display: inline-block;
+}
 
 .now-ext {
-  position: absolute;
-  right: -0.5ch;
-  font-weight: 800;
-  font-size: clamp(14px, 2.1vw, 22px);
-  line-height: 1;
+    position: absolute;
+    right: -0.5ch;
+    font-weight: 800;
+    font-size: clamp(14px, 2.1vw, 22px);
+    line-height: 1;
 }
-.now-ext--max { top: -0.35em;  color: #dc2626; }  /* vermelho */
-.now-ext--min { bottom: -0.35em; color: #2563eb; } /* azul */
 
-.u, .deg { white-space: nowrap; }
+#tmax,
+#tmin {
+    display: inline-flex;
+    align-items: baseline;
+    gap: .35ch;
+}
+
+#tmax {
+    color: #ef4444;
+}
+
+#tmin {
+    color: var(--accent);
+}
+
+#tmax .ext-label,
+#tmin .ext-label {
+    font-size: .8em;
+    opacity: .8;
+    font-weight: 600;
+}
+
+#tmax .ext-value,
+#tmin .ext-value {
+    font-size: 1em;
+    font-weight: 900;
+}
+
+
+.u,
+.deg {
+    white-space: nowrap;
+}
 
 .feels {
     color: var(--muted);
     margin-top: 4px;
 }
 
-/* grelha de métricas (sem caixas) */
 .now-metrics {
     display: grid;
     gap: 10px 18px;
@@ -144,7 +181,7 @@ body {
 }
 
 .now-metrics .m strong {
- flex-wrap: nowrap; 
+    flex-wrap: nowrap;
 }
 
 #rainToday {
@@ -162,16 +199,13 @@ body {
     font-variant-numeric: tabular-nums;
 }
 
-/* parte inferior: 1/3 */
 .bottom {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: var(--gap);
-  min-height: 0;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--gap);
+    min-height: 0;
 }
 
-/* previsão (3 cartões, contorno suave permitido) */
-/* título da previsão */
 .forecast-title {
     margin: 0 0 8px 0;
     font-weight: 800;
@@ -214,15 +248,26 @@ body {
 }
 
 .days .t {
-  white-space: nowrap;
-  font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
 }
 
-.days .t .hi { color: var(--hi); font-weight: 800; }
-.days .t .lo { color: var(--lo); font-weight: 800; }
-.days .t .sep { color: var(--muted); opacity: .8; font-weight: 600; }
+.days .t .hi {
+    color: var(--hi);
+    font-weight: 800;
+}
 
-/* gráfico 24h */
+.days .t .lo {
+    color: var(--lo);
+    font-weight: 800;
+}
+
+.days .t .sep {
+    color: var(--muted);
+    opacity: .8;
+    font-weight: 600;
+}
+
 .chart {
     display: grid;
     grid-template-rows: auto 1fr auto;
@@ -239,7 +284,6 @@ body {
     height: clamp(220px,
             28vh,
             360px);
-    /* ajusta-se ao ecrã, sem rebentar o layout */
 }
 
 .chart-canvas canvas {
@@ -271,7 +315,6 @@ body {
     background: var(--accent-2);
 }
 
-/* rodapé */
 .foot {
     display: flex;
     justify-content: flex-end;
@@ -301,38 +344,30 @@ body {
     font-weight: 700;
 }
 
-/* ícones Brisa Marinha */
-
 .bm-ico {
     width: 96px;
     height: 96px;
     display: inline-block;
 }
 
-
 .bm-ico.sunny {
     color: #f0a94a;
 }
 
-/* laranja suave p/ sol */
 .bm-ico.alert {
     color: #d36d6d;
 }
 
-/* p/ trovoada/avisos */
 .bm-ico.neutral {
     color: #7a8ca8;
 }
 
-/* Ícone grande (topo) */
 #bm-now-ico {
     width: clamp(72px, 9vw, 120px);
     height: clamp(72px, 9vw, 120px);
     display: block;
-    /* evita “baseline gaps” em inline SVG */
 }
 
-/* Ícones dos cartões de previsão */
 .bm-ico--sm {
     width: 48px;
     height: 48px;
@@ -420,10 +455,13 @@ body {
 }
 
 @media (min-width: 980px) {
-  .bottom {
-    grid-template-columns: 360px 1fr;
-  }
-  .days { grid-template-columns: repeat(3, 1fr); }
+    .bottom {
+        grid-template-columns: 360px 1fr;
+    }
+
+    .days {
+        grid-template-columns: repeat(3, 1fr);
+    }
 }
 
 @media (max-width: 900px) {
@@ -437,12 +475,12 @@ body {
 }
 
 @media (min-width: 900px) {
-  .hero-top {
-    grid-template-columns: minmax(260px, 520px) 1fr;
-    align-items: center;
-    gap: clamp(12px, 3vw, 40px);
-    min-height: 40vh;
-  }
+    .hero-top {
+        grid-template-columns: minmax(260px, 520px) 1fr;
+        align-items: center;
+        gap: clamp(12px, 3vw, 40px);
+        min-height: 40vh;
+    }
 }
 
 @media (max-height: 780px) {
@@ -509,8 +547,13 @@ body {
 }
 
 @media (max-width: 640px) {
-  .now-metrics { grid-template-columns: 1fr; }
-  .now-metrics span { min-width: 96px; }
+    .now-metrics {
+        grid-template-columns: 1fr;
+    }
+
+    .now-metrics span {
+        min-width: 96px;
+    }
 }
 
 @media (max-width: 520px) {
@@ -519,4 +562,8 @@ body {
     }
 }
 
-@media (min-width: 520px) { .days { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 520px) {
+    .days {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}

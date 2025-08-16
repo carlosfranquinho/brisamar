@@ -87,7 +87,7 @@ function setNowIcon(name, source, priority) {
 
 // HISTÓRICO/GRÁFICO (globais)
 let chart = null;
-let HISTORY_WINDOW_POINTS = 0; 
+let HISTORY_WINDOW_POINTS = 0;
 let chartLastTs = 0;
 
 /* Helpers */
@@ -262,8 +262,8 @@ async function loadForecast() {
         i === 0
           ? "hoje"
           : i === 1
-          ? "amanhã"
-          : day.toLocaleDateString("pt-PT", { weekday: "short" });
+            ? "amanhã"
+            : day.toLocaleDateString("pt-PT", { weekday: "short" });
 
       const iconName = iconNameFromIpma(d.idWeatherType, /*isDaytime*/ true);
       const tMax = Number.isFinite(+d.tMax) ? Math.round(d.tMax) : null;
@@ -274,8 +274,8 @@ async function loadForecast() {
   <div class="d">${label}</div>
   <div class="ic">
     <img class="bm-ico bm-ico--sm" src="${iconUrl(
-      iconName
-    )}" alt="${iconName.replace(/-/g, " ")}" width="48" height="48">
+        iconName
+      )}" alt="${iconName.replace(/-/g, " ")}" width="48" height="48">
   </div>
   <div class="t">
     <span class="hi">${tMax != null ? `${tMax}°` : "—"}</span>
@@ -348,6 +348,25 @@ function appendLivePointToChart(j) {
   chart.update("none");
 }
 
+function setInlineExt(sel, label, n, d = 0) {
+  const el = document.querySelector(sel);
+  if (!el) return;
+
+  if (n == null || isNaN(n)) { el.style.display = "none"; return; }
+  el.style.display = "";
+
+  const value = `${Number(n).toFixed(d)}°`;
+  const html = `<span class="ext-label">${label}</span><span class="ext-value">${value}</span>`;
+  const prev = el.dataset.val ?? el.innerHTML;
+
+  if (prev !== html) {
+    el.innerHTML = html;
+    el.dataset.val = html;
+    el.classList.add("pulse");
+    setTimeout(() => el.classList.remove("pulse"), 350);
+  }
+}
+
 /* Live */
 async function loadLive() {
   const r = await fetch(LIVE_URL, {
@@ -368,8 +387,8 @@ async function loadLive() {
   setText("#press", fmt(j.pressure_hpa, 0));
   setText("#uv", fmt(j.uv_index, 1));
   setText("#solar", fmt(j.solar_wm2, 0));
-  setText("#tmax", fmt("max" + j.temp_max_c, 0) + "°");
-  setText("#tmin", fmt("min" + j.temp_min_c, 0) + "°");
+  setInlineExt("#tmax", "máx", j.temp_max_c, 0);
+  setInlineExt("#tmin", "min", j.temp_min_c, 0);
 
   if (j.rain_day_mm != null) setText("#rainToday", fmt(j.rain_day_mm, 1));
 
