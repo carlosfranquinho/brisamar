@@ -348,25 +348,6 @@ function appendLivePointToChart(j) {
   chart.update("none");
 }
 
-function setInlineExt(sel, label, n, d = 0) {
-  const el = document.querySelector(sel);
-  if (!el) return;
-
-  if (n == null || isNaN(n)) { el.style.display = "none"; return; }
-  el.style.display = "";
-
-  const value = `${Number(n).toFixed(d)}°`;
-  const html = `<span class="ext-label">${label}</span><span class="ext-value">${value}</span>`;
-  const prev = el.dataset.val ?? el.innerHTML;
-
-  if (prev !== html) {
-    el.innerHTML = html;
-    el.dataset.val = html;
-    el.classList.add("pulse");
-    setTimeout(() => el.classList.remove("pulse"), 350);
-  }
-}
-
 /* Live */
 async function loadLive() {
   const r = await fetch(LIVE_URL, {
@@ -376,6 +357,12 @@ async function loadLive() {
   });
   if (!r.ok) throw new Error("live " + r.status);
   const j = await r.json();
+
+  const setExt = (sel, label, val) => {
+    const el = document.querySelector(sel);
+    if (!el) return;
+    el.innerHTML = `<span class="label">${label}</span><span class="val">${val}</span>`;
+  };
 
   setText("#temp", fmt(j.temp_c, 1));
   setText("#apparent", fmt(j.apparent_c ?? j.temp_c, 1));
@@ -387,8 +374,8 @@ async function loadLive() {
   setText("#press", fmt(j.pressure_hpa, 0));
   setText("#uv", fmt(j.uv_index, 1));
   setText("#solar", fmt(j.solar_wm2, 0));
-  setInlineExt("#tmax", "máx", j.temp_max_c, 0);
-  setInlineExt("#tmin", "min", j.temp_min_c, 0);
+  setExt("#tmax", "máx", `${fmt(j.temp_max_c, 0)}°`);
+  setExt("#tmin", "min", `${fmt(j.temp_min_c, 0)}°`);
 
   if (j.rain_day_mm != null) setText("#rainToday", fmt(j.rain_day_mm, 1));
 
