@@ -115,6 +115,7 @@ const degToDir = (deg) => {
   ];
   return dirs[Math.round((((deg % 360) + 360) % 360) / 22.5) % 16];
 };
+
 const localTime = (iso) => new Date(iso);
 
 function setText(sel, text) {
@@ -364,6 +365,9 @@ async function loadLive() {
     el.innerHTML = `<span class="label">${label}</span><span class="val">${val}</span>`;
   };
 
+  const tmaxH = j.temp_max_time ? new Date(j.temp_max_time).toLocaleTimeString("pt-PT", { hour: "2-digit", minute: "2-digit" }) : "";
+  const tminH = j.temp_min_time ? new Date(j.temp_min_time).toLocaleTimeString("pt-PT", { hour: "2-digit", minute: "2-digit" }) : "";
+
   setText("#temp", fmt(j.temp_c, 1));
   setText("#apparent", fmt(j.apparent_c ?? j.temp_c, 1));
   setText("#wind", fmt(j.wind_kmh, 0));
@@ -374,8 +378,8 @@ async function loadLive() {
   setText("#press", fmt(j.pressure_hpa, 0));
   setText("#uv", fmt(j.uv_index, 1));
   setText("#solar", fmt(j.solar_wm2, 0));
-  setExt("#tmax", "máx", `${fmt(j.temp_max_c, 1)}°`);
-  setExt("#tmin", "min", `${fmt(j.temp_min_c, 1)}°`);
+  setText("#tmax", `máx ${fmt(j.temp_max_c, 1)}°${tmaxH ? ` (${tmaxH})` : ""}`);
+  setText("#tmin", `min ${fmt(j.temp_min_c, 1)}°${tminH ? ` (${tminH})` : ""}`);
 
   if (j.rain_day_mm != null) setText("#rainToday", fmt(j.rain_day_mm, 1));
 

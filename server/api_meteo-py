@@ -298,18 +298,40 @@ async def ecowitt_report(request: Request):
                 solar_wm2, apparent_c, uv_index
             ))
             conn.commit()
-            return tmin, tmax
+            
+            # hora da MÁX do dia (local)
+            cur.execute("""
+                SELECT temp_c, ts_local
+                FROM observations
+                WHERE station_id = %s AND DATE(ts_local) = DATE(%s)
+                ORDER BY temp_c DESC, ts_local DESC
+                LIMIT 1
+            """, ("meteomg", ts_local))
+            rmax = cur.fetchone()
+            tmax_time = rmax["ts_local"] if rmax else None
+
+            # hora da MÍN do dia (local)
+            cur.execute("""
+                SELECT temp_c, ts_local
+                FROM observations
+                WHERE station_id = %s AND DATE(ts_local) = DATE(%s)
+                ORDER BY temp_c ASC, ts_local ASC
+                LIMIT 1
+            """, ("meteomg", ts_local))
+            rmin = cur.fetchone()
+            tmin_time = rmin["ts_local"] if rmin else None
+            
+            return tmin, tmax, tmin_time, tmax_time
         finally:
             try:
                 cur.close()
             finally:
                 conn.close()
-
+                
     try:
-        tmin, tmax = await asyncio.to_thread(_insert_and_extremes)
+        tmin, tmax, tmin_time, tmax_time = await asyncio.to_thread(_insert_and_extremes)
     except Exception as e:
-        # se a BD falhar, loga e prossegue (não impede o live.json)
-        tmin, tmax = None, None
+        tmin, tmax, tmin_time, tmax_time = None, None, None, None
         try:
             with open(os.path.join(LOG_DIR, "db_errors.log"), "a", encoding="utf-8") as f:
                 f.write(f"{datetime.utcnow().isoformat()}Z DB_FAIL {e}\n")
@@ -327,6 +349,8 @@ async def ecowitt_report(request: Request):
         "temp_c": temp_c,
         "temp_max_c": tmax,
         "temp_min_c": tmin,
+        "temp_max_time": tmax_time,
+        "temp_min_time": tmin_time,
         "apparent_c": apparent_c,
         "rh_pct": rh_pct,
         "dewpoint_c": dewpoint_c,
